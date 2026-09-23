@@ -161,3 +161,47 @@ stops were mistakes of this runtime, not missing features:
 Two SDK behaviours were worth reading before emulating: `writeEndOfFrame`
 paces the game with GX FIFO breakpoints, not draw-done, and the device
 check needs the drive to *fail* in exactly the right way (`04-curiosities.md`).
+
+## Session 4 — graphics: from the strap screen to the first classroom
+
+Goal: phase 3 of the plan. Draw the GX stream the game already sends,
+starting with the screens of the boot: the Wii Strap, the Bink logos, the
+Scaleform menus.
+
+Results:
+
+* **The renderer** (`12-renderer.md`): SDL3 and OpenGL 4.5 on the host's
+  main thread. The guest side of the FIFO decodes whatever reads guest
+  memory at the moment the game believes the GP read it (vertices through
+  the arrays, XF matrices from indexed arrays, textures through TMEM's
+  palettes, hashed and cached) and records it; the renderer draws the
+  record from its own BP and XF mirrors, up to two frames behind. TEV
+  configurations become GLSL programs in integer arithmetic, indirect
+  stages included; EFB copies stay on the host GPU, as textures or as XFB
+  frames; each VI retrace presents the XFB that VI's registers name, at the
+  height VI scans out.
+* **Everything the boot shows renders** at the first attempt that compiled:
+  the Wii Strap screen, the D3 Publisher and other Bink logos (five TEV
+  stages, two indirect stages, signed colour registers), the Scaleform
+  title screen. Two defects, both visible only in the picture, and both
+  spotted by eye during the session: short lines in the Bink frames
+  (texture coordinates truncated to fixed point a hair short of an exact
+  texel edge, under Bink's indirect un-swizzling) and a stretched title (the
+  game letterboxes to 16:9 through VI: 360 of 480 lines).
+* **The first classroom.** With a debugging Remote on channel 0 (keys and
+  the mouse, `wpad.cpp`, and scripted presses with `WIIKIT_PAD`), "Press A"
+  leads to the main menu, and "Start New Game" to Sikowitz's classroom at
+  Hollywood Arts, in 3D: Tori, Jade and Sikowitz skinned and lit, the
+  tutorial prompt over the scene. 56 programs, about 190 draws and
+  9 EFB copies to textures per frame; no fog, no Z textures, no TMEM
+  preloads so far.
+* **Side questions answered.** The main loop's wait was the title screen's
+  "Press A". The game runs at **30 frames a second**, one per two
+  retraces, from the strap screen to the classroom. The SDK's idle loop
+  had kept a host core spinning: the recompiler now finds loops that only
+  an interrupt can end (16 in the executable: `SelectThread`'s idle loop,
+  the DVD and AX waits) and blocks them on the interrupt line; the clock
+  thread sleeps on a high-resolution waitable timer instead of yielding
+  through its last 2 ms. At the title screen the process went from 1.85
+  host cores to 0.27; the classroom takes about one.
+* The native self-test still passes, 15 of 15.

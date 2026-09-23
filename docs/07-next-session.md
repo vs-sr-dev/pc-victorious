@@ -1,27 +1,26 @@
-# TODO — session 4
+# TODO — session 5
 
-Phase 3 of the plan: graphics. The game runs its main loop and sends whole
-frames of GX commands; the goal is to see them. First target the screens
-the boot already goes through: the Wii Strap and health screens, the Bink
-logos, then the Scaleform menus.
+Phase 4 of the plan: input. The renderer reaches the first classroom with a
+debugging Remote (keys, the mouse as a raw pointer); the goal is the mouse
+as the Wii Remote, well enough to **play E1A1**.
 
-1. **A window.** SDL3 with an OpenGL 4.5 context, driven from the clock
-   thread's VI retrace; `VISetNextFrameBuffer`'s address (VI TFBL) names
-   the XFB to present.
-2. **The GX state.** `gx.cpp` already parses the stream: keep BP, CP and XF
-   state per draw instead of only counting, and decode vertices through the
-   VCD/VAT and the CP array registers (indexed attributes).
-3. **TEV → GLSL**, one program per TEV configuration, cached; blending,
-   depth, culling, scissor and viewport from BP/XF.
-4. **Textures**: `wiikit.gxtex` (hardware-verified in The Last Story) ported
-   to C++, with TLUTs; a cache keyed by address and format.
-5. **EFB copies**: to the XFB (the frame) and to textures (Bink frames,
-   render targets). The XFB copy is the "frame done" of `writeEndOfFrame`.
-6. **Dolphin as the oracle**: a FIFO log of the boot screens, to check the
-   parser and the first frames (`05-open-questions.md` 9).
-7. **Side work**:
-   * where the main loop waits now: which screen, and whether it asks for a
-     Remote (phase 4 will answer with the mouse);
-   * the idle loop spins a host core: block the clock-less idle context on
-     the interrupt line instead;
-   * measure the loop's frame rate against the 59.94 Hz retrace.
+1. **The pointer.** The tutorial asks "Point the Wii Remote at Jade, and
+   press A": check that the game's cursor follows the mouse
+   (`CAdventureCursor`, `CGame::processPointer`) and that hovering and
+   clicking a character works. Then the feel: the Remote's pointer is
+   smoothed by KPAD (`KPADSetPosParam`) and the game may filter it again;
+   the mouse should map one to one.
+2. **The controls table.** Read `CGame::setDefaultControlMapping` once for
+   all logical controls (`05-open-questions.md` 2), and give each a
+   default key.
+3. **The shake** for the rhythm game: what `SController+0xC8` holds
+   (`05-open-questions.md` 1) and a key that produces it.
+4. **The Home Button menu**: the game can open it; decide whether it is
+   kept (it needs its own `homeBtn.arc` resources and the Remote's
+   speaker) or answered as "closed".
+5. **Renderer leftovers**, as they appear while playing: fog, Z textures,
+   TMEM preloads (each reported once when first used), texture eviction,
+   CPU access to the EFB.
+6. **Side work**: a frame from Dolphin for the classroom, side by side
+   (the first use of Dolphin as the oracle); the renderer's cost per frame
+   at `--scale 2` and above.

@@ -10,7 +10,11 @@ played, Wwise running on a silent AX, and frames of GX commands flowing.
 ```
 wiiboot build/extract [--nand DIR] [--fonts DIR] [--symbols build/symbols.tsv]
                       [--mmio-log] [--watch SECONDS]
+                      [--no-video] [--scale N] [--dump DIR] [--dump-every N] [--quit-after SECONDS]
 ```
+
+The video options belong to the renderer, `12-renderer.md`. The game runs
+on its own threads; the process's main thread runs the window.
 
 | Option | |
 |---|---|
@@ -30,7 +34,7 @@ the interface is narrow and the same for every game.
 | Threads | **one function**, `OSLoadContext` | the SDK's scheduler, mutexes, message queues, alarms all run recompiled; only the context switch cannot |
 | Interrupts | the exception vector | delivered at safe points through the game's own handlers |
 | Disc, NAND, ES, STM | **the IPC registers** | the SDK's IOS client runs recompiled; IOS itself is emulated, as in Dolphin |
-| GX | the write-gather pipe and CP/PE registers | the command stream is parsed; nothing drawn yet |
+| GX | the write-gather pipe and CP/PE registers | the command stream is parsed, decoded and drawn with OpenGL (`12-renderer.md`) |
 | DSP | the mailboxes | the ROM, init and AX micro-codes in HLE |
 | Wii Remote | **the WPAD/KPAD API** | the Bluetooth stack below never starts |
 | Console | `__write_console` | MSL's output: `printf`, `OSReport` |
@@ -81,15 +85,25 @@ when it is resumed.
 External interrupts come through PI's cause and mask; the decrementer from
 the host clock.
 
+**Loops only an interrupt can end.** With nothing to run, the SDK's
+`SelectThread` spins on `RunQueueBits` with interrupts enabled, and a
+host core spun with it. The recompiler recognises such loops (a back-edge
+over loads from the small-data area and compares, nothing else: 16 in
+Victorious, the idle loop and the DVD and AX waits) and emits `PPC_IDLE`,
+which blocks the host thread until a device raises the line, for at most
+1 ms. One guest thread runs at a time, so nothing else could have changed
+the word they watch.
+
 ## Time
 
 The time base runs at 60.75 MHz (a quarter of the 243 MHz bus) from the
 host's steady clock. `mttb` moves it; the decrementer, which counts on its
 own, is kept unaffected. A clock thread keeps host time: VI retraces at
-59.94 Hz, the AI DMA's blocks, and the decrementer's deadline. It sleeps in
-whole milliseconds and yields through the last one: condition-variable
-timeouts on MinGW are as coarse as the 15.6 ms system tick, and
-`OSSleepTicks(200 µs)` otherwise took a whole frame.
+59.94 Hz, the AI DMA's blocks, and the decrementer's deadline. On Windows
+it sleeps on a high-resolution waitable timer and yields only through the
+last 200 µs; condition-variable timeouts on MinGW are as coarse as the
+15.6 ms system tick, and `OSSleepTicks(200 µs)` otherwise took a whole
+frame.
 
 ## Memory
 
@@ -112,7 +126,7 @@ and the IOS version against the expected one at `0x3188`.
 | Device | What is modelled |
 |---|---|
 | PI | cause (computed from the devices) and mask; CPU FIFO base, end, write pointer |
-| VI | DI0–DI3 retrace interrupts; the beam position from the clock |
+| VI | DI0–DI3 retrace interrupts; the beam position from the clock; for the renderer, the XFB address (TFBL) and the active lines (VTR) |
 | DSP | reset, halt, mailboxes (writing the low half sends; the DSP takes it at once), ARAM DMA (no ARAM: done at once), the AI DMA with its per-block interrupt |
 | EXI | three channels, immediate and DMA transfers; channel 0 device 1 is the IPL chip: RTC, SRAM, the debug UART, and the boot ROM's fonts |
 | SI | no controllers: every transfer ends in "no response" |
@@ -165,9 +179,12 @@ device has been detected". The emulated drive has to fail exactly.
 
 ## The Wii Remote (`wpad.cpp`)
 
-The public WPAD and KPAD API is replaced: WPAD is ready, and no Remote is
-connected. The Bluetooth stack (WUD, BTA/BTE) never starts, so nothing
-waits for the HCI dongle. This is where the mouse will come in.
+The public WPAD and KPAD API is replaced: WPAD is ready, and one Remote is
+connected, on channel 0, driven by the host: for now debugging keys and the
+mouse as a raw pointer (`12-renderer.md`), filling one 0xF0-byte
+`KPADStatus` per `KPADRead`. The Bluetooth stack (WUD, BTA/BTE) never
+starts, so nothing waits for the HCI dongle. The mouse-driven Remote proper
+is phase 4.
 
 ## The boot, step by step
 

@@ -79,3 +79,24 @@ sits next to `ui\wii_controller_buttons.tga` in the same object.
 `BATConfig`, which maps MEM1 and MEM2 through the BAT registers, ends in a
 loop that never exits unless its argument is `0xBA2CF`. The SDK's own caller
 passes it; anything else calling the function hangs there.
+
+### 12. Bink's frames are stored scrambled
+
+On the Wii, Bink does not hand GX a picture. Its luma plane (a 640 × 448
+I8 texture for a 640 × 360 video) and its two chroma planes are stored in
+a scrambled order, and two tiny index textures, 128 × 4 and 64 × 4, hold
+offsets: a column step of eight texels and a row step of one per unit.
+Drawing a frame takes five TEV stages and two indirect stages that use
+those offsets to fetch each pixel's Y, Cb and Cr from where the decoder put
+them, then signed colour registers to turn YCbCr into RGB. Offsets like
+these land exactly on texel edges, which is why a renderer that rounds its
+texture coordinates the wrong way draws stray lines across the video
+(`12-renderer.md`).
+
+### 13. Everything after the strap screen is letterboxed
+
+The Wii Strap and health screens are 448-line pictures. From the Bink
+logos on, the game renders and copies 640 × 360 frames, 16:9, and has VI
+scan them out as 360 of the 480 lines, black above and below: widescreen
+presentation on a 4:3 setting, done in the video interface rather than
+in the renderer.

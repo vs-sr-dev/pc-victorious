@@ -21,7 +21,7 @@ the end of its unit. Inside it:
 
 | Guest | C++ |
 |---|---|
-| branch inside the body | `goto L_XXXXXXXX;`; a backward one first checks for interrupts (`PPC_POLL`) |
+| branch inside the body | `goto L_XXXXXXXX;`; a backward one first checks for interrupts (`PPC_POLL`), or waits for one (`PPC_IDLE`) when the loop only reads the small-data area and compares, so that only an interrupt can end it |
 | branch to another unit | tail call: `{ f_Y(c); return; }` |
 | `bl` | `c.lr = next; f_Y(c);` |
 | `blr` | `return;` |

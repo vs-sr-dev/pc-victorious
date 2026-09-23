@@ -20,10 +20,10 @@ consolidated into one package, with dependencies removed.
 | Layer | Question it answers | Now | Next |
 |---|---|---|---|
 | 1. Recognise | What is on this disc? | `disc --info`: game id, partitions, WBFS usage | a `fingerprint`: magics, SDK library dates, middleware found by symbol or string (Scaleform, Wwise, Bink, NW4R, Home Button) |
-| 2. Extract | Turn standard formats into standard files | `disc` (ISO and WBFS, AES, FST), `u8`, `tpl`, `gxtex`, `dsp` | palette formats C4/C8/C14X2, BRSTM/BRSAR, THP, BNR |
+| 2. Extract | Turn standard formats into standard files | `disc` (ISO and WBFS, AES, FST), `u8`, `tpl`, `gxtex`, `dsp` | palette formats C4/C8/C14X2 in Python (the runtime's C++ `gxtex` has them), BRSTM/BRSAR, THP, BNR |
 | 3. Map code | What does the code do, where? | `dol` (DOL and ELF, one address map, symbols, `--same-as`, `--libs`), `cw` (CodeWarrior demangler), `ppc` (Gekko decoder with paired singles, disassembly, callers, lis/addi and SDA xrefs, instruction census) | SDK function signatures for stripped games, FIFO log decoding from The Last Story |
 | 4. Translate | Turn Gekko code into C++ | `recomp`: units and entry points to a fixed point, switch tables, one C++ function per entry, dispatch table, CMake project (`09-recompiler.md`) | stripped games (function discovery without symbols), faithful single-precision rounding |
-| 5. Runtime | Replace the hardware | `ppc.h` (the CPU model), `core`/`mem` (guest space, dispatch, hooks), `os` (guest threads on host threads, interrupts, time), `hw` (PI, VI, DSP micro-codes, AI, EXI, SI, Hollywood), `gx` (FIFO and command parsing), `ios` + `disc` (IOS HLE at the IPC registers), `boot`, `wpad`, and `wiiboot` (`11-runtime.md`) | the GX renderer, the AX mixer, the mouse as a Remote, a window |
+| 5. Runtime | Replace the hardware | `ppc.h` (the CPU model), `core`/`mem` (guest space, dispatch, hooks), `os` (guest threads on host threads, interrupts, time), `hw` (PI, VI, DSP micro-codes, AI, EXI, SI, Hollywood), `gx` (FIFO parsing, vertex and texture decoding, the record), `gxtex` (GX texture formats), `gxshader` (TEV and XF to GLSL), `video` (the SDL3 window and the OpenGL 4.5 renderer, `12-renderer.md`), `ios` + `disc` (IOS HLE at the IPC registers), `boot`, `wpad`, and `wiiboot` (`11-runtime.md`) | the AX mixer, the mouse as a Remote, fog and Z textures, Dolphin as the oracle |
 
 ## Principles
 
@@ -49,6 +49,7 @@ consolidated into one package, with dependencies removed.
 | `dsp` | Crystal Bearers' audio, by ear and spectrogram |
 | `recomp` + `runtime` | Victorious: all 20 653 functions compile and link; the game's own `sprintf`, `strtod`, 64-bit division, `sin`/`cos`, `qsort` with game comparators, `PSMTX*` paired-single matrices and `memcpy`/`memset`, run natively, match the host in 15 of 15 tests |
 | `runtime` (hardware) | Victorious boots from `__start` to its main loop: the SDK's own `OSInit` report, its anti-modchip device check, the Bink logos, Wwise on AX, frames of GX commands |
+| `runtime` (renderer) | Victorious, by eye: the Wii Strap screen, the Bink logos (indirect textures), the Scaleform title and menus, the first classroom in 3D, at 30 frames a second |
 
 ## Known gaps
 

@@ -23,13 +23,14 @@ the North American release, S2VEG9.
     tools/           Victorious-specific tools, and the native self-test
     wiikit/          game-agnostic Wii toolkit
     wiikit/recomp/   the static recompiler (Gekko -> C++)
-    wiikit/runtime/  the C++ side: CPU model, guest memory, OS, hardware, IOS; wiiboot
+    wiikit/runtime/  the C++ side: CPU model, guest memory, OS, hardware, IOS, the renderer; wiiboot
 
 ## Tools
 
 The Python tools need only Python 3.8+ and no dependencies (pycryptodome,
 if installed, speeds up disc decryption). Building the recompiled code needs
-CMake, Ninja and a C++20 compiler (clang 22 from MSYS2 is what is used here).
+CMake, Ninja, a C++20 compiler (clang 22 from MSYS2 is what is used here)
+and SDL3; running it needs OpenGL 4.5.
 Run from the repository root.
 
 ```sh
@@ -71,7 +72,12 @@ build/recomp-build/selftest build/extract/sys/main.dol build/symbols.tsv
 
 # boot the game: the NAND in build/nand, the boot ROM's fonts in build/fonts
 # (font_western.bin, font_japanese.bin: Dolphin's Sys/GC has free ones)
-build/recomp-build/wiiboot build/extract --symbols build/symbols.tsv --watch 10
+# a window opens; debugging keys until the mouse-driven Remote: Enter, Z or
+# the left button = A, X or the right button = B, arrows = d-pad, +, -, 1, 2;
+# the mouse over the picture is the pointer
+build/recomp-build/wiiboot build/extract --symbols build/symbols.tsv
+build/recomp-build/wiiboot build/extract --scale 2 --dump build/shots --dump-every 300
+build/recomp-build/wiiboot build/extract --no-video --watch 10     # no window
 
 # standard Wii formats
 python -m wiikit.u8 build/extract/files/HomeButton2/homeBtn.arc
@@ -79,6 +85,15 @@ python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
 ```
 
 ## Status
+
+Session 4: **the game is drawn.** The GX command stream is decoded on the
+game's side and drawn with OpenGL 4.5 on the host's main thread: the TEV
+becomes generated GLSL in integer arithmetic, indirect textures included,
+EFB copies stay on the GPU, and VI presents each frame at the height it
+scans out. The Wii Strap screen, the Bink logos, the Scaleform title and
+menus, and, past "Press A" with a debugging Remote, Sikowitz's classroom
+at Hollywood Arts in 3D all render, at the game's own 30 frames a second on
+about one host core. Next is the mouse as the Remote.
 
 Session 3: **the game boots to its main loop.** The runtime replaces the
 Wii under the recompiled code: guest threads on host threads with only the
@@ -124,6 +139,7 @@ See [docs/00-sessions.md](docs/00-sessions.md) for the log,
     09-recompiler.md          the recompiler, the CPU model, the native tests
     10-wiikit.md              the game-agnostic toolkit
     11-runtime.md             the runtime: OS, interrupts, IOS, DSP, GX; the boot step by step
+    12-renderer.md            the renderer: GX on OpenGL, TEV to GLSL, EFB copies, VI
 
 ## Licence
 
