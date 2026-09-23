@@ -1,0 +1,23 @@
+# BYOA: no content from the original disc enters the repo.
+build/
+*.wbfs
+*.WBFS
+*.iso
+*.ISO
+*.rvz
+*.dol
+*.elf
+*.POD
+*.pod
+*.bik
+*.arc
+*.tpl
+*.tga
+*.png
+*.wav
+*.wem
+*.bnk
+*.gfx
+*.swf
+__pycache__/
+*.pyc
