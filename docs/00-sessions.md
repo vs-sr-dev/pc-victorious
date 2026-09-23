@@ -104,3 +104,60 @@ Also settled: no `setjmp`/`longjmp` anywhere in the executable, and
 `OSSwitchFiberEx` only in Bluetooth code the port drops. Thread switching is
 `OSLoadContext`, called from the scheduler, interrupts and exceptions: a
 clean cut for phase 2.
+
+## Session 3 — the runtime: from `__start` to the main loop
+
+Goal: phase 2 of the plan, boot. Run `__start` natively as far as
+`CGame::init`, and decide where to cut the operating system.
+
+Results:
+
+* **The OS cut, decided by reading the SDK** (`11-runtime.md`). The
+  scheduler funnels every context switch through `OSLoadContext`, so that
+  one function is replaced and everything else (run queues, mutexes, message
+  queues, alarms) runs recompiled. Guest threads live on host threads, one
+  running at a time. Interrupts arrive at safe points (the 13 617 backward
+  branches, and `mtmsr` enabling them) through the game's own handlers, as
+  `OSExceptionVector` would call them. For I/O the cut is the IPC registers:
+  the SDK's DVD, NAND and ES code runs recompiled against IOS emulated as in
+  Dolphin, with the disc served from the extracted tree.
+* **The recompiler grew hooks and safe points** (`09-recompiler.md`):
+  functions named in `runtime/hooks.txt` get a replaceable slot and keep
+  their original; 47 in Victorious, all SDK functions, found by name.
+* **The runtime** (`wiikit/runtime`, `wiiboot`): OS threads and interrupts,
+  time base and decrementer, PI, VI, DSP with the ROM, init and AX
+  micro-codes (silent), AI DMA, EXI with the IPL chip (RTC, SRAM, the boot
+  ROM's fonts), SI, the Hollywood registers, IOS (`/dev/di`, `/dev/fs`,
+  `/dev/es`, `/dev/stm`), the GX FIFO with a command parser, the HLE boot
+  state, and WPAD/KPAD replaced with "no Remote connected".
+* **The game boots.** The SDK reports itself ("Revolution OS … Console
+  Type: Retail 33, Firmware 56.22.29 … MEM1 Arena 0x80a3bfa0 – 0x817fdb00"),
+  passes its anti-modchip device check, and the game says "Starting up the
+  application...". `APIDLLinit` sets up GX, `CGame::init` shows the Wii
+  Strap screens, starts Wwise on AX and plays the Bink logos on their own
+  threads, and the game enters **`CGame::run`**, its main loop. In a
+  three-minute run it stays there, stable, eight guest threads alive; in
+  the second minute it sent 4 million GX commands, 83 670 primitives and
+  about 30 EFB copies a second. Nothing is drawn yet.
+* The tools grew for it: `--mmio-log` (every hardware register the boot
+  touches, with the function that touched it) and `--watch` (every few
+  seconds, where each guest thread is). `wiikit.disc --extract` now writes
+  the ticket and TMD too; the TMD says the game runs on IOS 56.
+
+The boot, one stop at a time, is tabulated in `11-runtime.md`. Four of the
+stops were mistakes of this runtime, not missing features:
+
+* EXI DMA addresses were masked to 26 bits, which cut MEM2's physical
+  addresses: the ROM font was read into the wrong place and `OSInitFont`
+  found no font.
+* The clock thread planned in time-base units; the game rewrites the time
+  base, the plan jumped, and the decrementer never fired. It keeps host time
+  now.
+* Its condition-variable timeouts had the 15.6 ms granularity of the
+  Windows tick through winpthreads: `OSSleepTicks(200 µs)` took a frame.
+* The DSP mailbox's top bit was taken for part of the mail; it is the
+  "full" flag the write sets, and the boot mails without it were lost.
+
+Two SDK behaviours were worth reading before emulating: `writeEndOfFrame`
+paces the game with GX FIFO breakpoints, not draw-done, and the device
+check needs the drive to *fail* in exactly the right way (`04-curiosities.md`).

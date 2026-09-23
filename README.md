@@ -23,7 +23,7 @@ the North American release, S2VEG9.
     tools/           Victorious-specific tools, and the native self-test
     wiikit/          game-agnostic Wii toolkit
     wiikit/recomp/   the static recompiler (Gekko -> C++)
-    wiikit/runtime/  the C++ side: CPU model, guest memory, services
+    wiikit/runtime/  the C++ side: CPU model, guest memory, OS, hardware, IOS; wiiboot
 
 ## Tools
 
@@ -33,7 +33,8 @@ CMake, Ninja and a C++20 compiler (clang 22 from MSYS2 is what is used here).
 Run from the repository root.
 
 ```sh
-# the disc: header, partitions; extract the DATA partition (.iso or .wbfs)
+# the disc: header, partitions; extract the DATA partition (.iso or .wbfs):
+# sys/, files/, and the ticket and TMD
 python -m wiikit.disc GAME.wbfs --info
 python -m wiikit.disc GAME.wbfs --extract build/extract
 
@@ -68,6 +69,10 @@ cmake -S build/recomp -B build/recomp-build -G Ninja -DCMAKE_CXX_COMPILER=clang+
 ninja -C build/recomp-build
 build/recomp-build/selftest build/extract/sys/main.dol build/symbols.tsv
 
+# boot the game: the NAND in build/nand, the boot ROM's fonts in build/fonts
+# (font_western.bin, font_japanese.bin: Dolphin's Sys/GC has free ones)
+build/recomp-build/wiiboot build/extract --symbols build/symbols.tsv --watch 10
+
 # standard Wii formats
 python -m wiikit.u8 build/extract/files/HomeButton2/homeBtn.arc
 python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
@@ -75,13 +80,21 @@ python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
 
 ## Status
 
+Session 3: **the game boots to its main loop.** The runtime replaces the
+Wii under the recompiled code: guest threads on host threads with only the
+SDK's context switch replaced, interrupts delivered through the game's own
+handlers, IOS emulated at the IPC registers, the DSP's micro-codes, the
+GX FIFO parsed. From `__start` the SDK reports itself, passes its
+anti-modchip check, and the game runs `CGame::init` (the strap screens,
+Wwise, the Bink logos) and settles in `CGame::run`, sending whole frames of
+GX commands. Nothing is drawn yet: next is the renderer.
+
 Session 2: **the whole executable recompiles to C++, compiles, links and
 runs.** All 20 653 functions (1.66 million instructions) become 124 MB of
 C++ that clang builds in under two minutes, and the game's own code, run
 natively on the retail `main.dol` image, matches the host in 15 of 15 tests:
 its `sprintf`, 64-bit division, libm, `qsort` through its comparators, the
-SDK's paired-single matrix library, its FPR-based `memcpy`. Next: booting it
-(`__start` to `CGame::init`).
+SDK's paired-single matrix library, its FPR-based `memcpy`.
 
 Session 1: the disc is read and mapped, and the developers' symbolised ELF
 turns out to be on it, byte-identical to the retail executable, with 20 619
@@ -110,6 +123,7 @@ See [docs/00-sessions.md](docs/00-sessions.md) for the log,
     08-input-and-rhythm.md    the input path, and the rhythm game's shake
     09-recompiler.md          the recompiler, the CPU model, the native tests
     10-wiikit.md              the game-agnostic toolkit
+    11-runtime.md             the runtime: OS, interrupts, IOS, DSP, GX; the boot step by step
 
 ## Licence
 

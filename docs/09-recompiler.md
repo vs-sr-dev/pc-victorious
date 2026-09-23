@@ -21,7 +21,7 @@ the end of its unit. Inside it:
 
 | Guest | C++ |
 |---|---|
-| branch inside the body | `goto L_XXXXXXXX;` |
+| branch inside the body | `goto L_XXXXXXXX;`; a backward one first checks for interrupts (`PPC_POLL`) |
 | branch to another unit | tail call: `{ f_Y(c); return; }` |
 | `bl` | `c.lr = next; f_Y(c);` |
 | `blr` | `return;` |
@@ -31,6 +31,21 @@ the end of its unit. Inside it:
 
 Each instruction becomes one statement in its own block, so a `goto` never
 jumps over an initialisation. The original disassembly follows as a comment.
+
+**Hooks.** Functions named in `runtime/hooks.txt` (and `--hooks` files)
+are generated as `orig_XXXXXXXX`, and `hooks.cpp` defines `f_XXXXXXXX` as
+a slot: the runtime fills it with `ppc_hook("OSLoadContext", fn)`, which
+returns the original for wrappers; an empty slot runs the original. The
+list is by name, so it serves any symbolised game; Victorious has 47 of its
+functions (`11-runtime.md`). `@name` lines ask for a data symbol's address.
+
+**Safe points.** A backward branch closes a loop: 13 617 of them in
+Victorious check the interrupt line, one relaxed atomic load, and call
+`ppc_poll` if it is up. So does `mtmsr` when it sets MSR[EE]. `mtspr`/`mfspr`
+of DEC, TBL and TBU are runtime services.
+
+Generated files are rewritten only when their content changes: adding a
+hook recompiles two files, not two hundred.
 
 Anomalies the model reports, all harmless:
 
@@ -72,8 +87,12 @@ Dolphin find them:
 * `fres`, `frsqrte`, `ps_res` and `ps_rsqrte` are exact, where the hardware
   gives an estimate from a table;
 * FPSCR exception bits are not maintained (only FPCC and the rounding mode);
-* `sc`, `rfi`, `tw`, MMIO and the time base are runtime services; the
-  stub runtime aborts on them.
+* `sc`, `rfi`, `tw`, MMIO, the time base and the decrementer are runtime
+  services: `wiikit_stub` aborts on the first four, `wiikit_hw` implements
+  them (`11-runtime.md`).
+
+Addresses at or above `0xC0000000` take one more branch, to `ppc_io_*`: the
+uncached mirrors of MEM1 and MEM2, the hardware, the locked cache.
 
 ## Building
 
@@ -90,10 +109,11 @@ on 18 threads the build takes 1 min 38 s: a 73 MB static library, and a
 58 MB link-check executable holding all 20 653 functions. No generated
 function fails to compile.
 
-The generated build is a static library `recomp` plus the runtime library
-`wiikit_rt`. They depend on each other (the code calls runtime services,
-and the runtime reads the generated dispatch table), and CMake resolves the
-cycle. `-DWIIKIT_EXTRA=file.cmake` lets a project add its own targets.
+The generated build is a static library `recomp` plus the runtime
+(`runtime/runtime.cmake`): `wiikit_core` (memory, dispatch, hooks) with
+either `wiikit_stub` (no hardware: `linkcheck`, `selftest`) or `wiikit_hw`
+(`wiiboot`, the game). `-DWIIKIT_EXTRA=file.cmake` lets a project add its
+own targets.
 
 ## Differential tests: the game's code, run natively
 
@@ -143,11 +163,6 @@ What each test exercises:
 * **`memcpy`**: 8-byte copies through `lfd`/`stfd`, which must be bit-exact
   for any data, NaN patterns included.
 
-## What the runtime must still provide (phase 2)
+## The runtime
 
-* **OS**: threads, whose context switch goes through `OSLoadContext`
-  (10 call sites: the scheduler, interrupts, exceptions), alarms, mutexes,
-  message queues, heaps and arena. `OSSwitchFiberEx` is only used by the
-  Bluetooth USB callbacks, which the port drops. There is no `setjmp` /
-  `longjmp` anywhere in the executable.
-* **Hardware**: DVD, VI, GX FIFO, AX/DSP, KPAD, NAND.
+Phase 2 built it: `11-runtime.md`.

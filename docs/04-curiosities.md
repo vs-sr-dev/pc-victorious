@@ -50,3 +50,32 @@ and exported to XML by a macro.
 
 The SDK objects say "release build: Aug 23 2010"; the game's own date
 string is "Sep 20 2012".
+
+### 8. The disc checks the drive for a modchip
+
+Before `main` runs, the SDK's `__DVDCheckDevice` asks the drive for two
+things a genuine Wii drive refuses: raw sectors past the end of the disc,
+and a DVD-video key. If either succeeds, the drive is a modified one and the
+game stops at "Error #001, unauthorized device has been detected", in the
+console's language. An emulated drive has to fail both, with the right error
+codes (`11-runtime.md`).
+
+### 9. The error handler is called `reallyGTFO`
+
+The engine's fatal-error function is `reallyGTFO(const char*, ...)`, fed by
+two globals, `gtfoSourceFile` and `gtfoSourceLine`. It guards things like
+"Frame queue is full!" and "Can't allocate memory for the wpad, there's big
+trouble."
+
+### 10. A GameCube font check in a Wii game
+
+A static constructor in `gcutil.cpp` loads the console's boot-ROM font with
+`OSInitFont` and panics if it cannot: "ROM font is available in boot ROM
+ver 0.8 or later". The file name and the message are GameCube-era; the font
+sits next to `ui\wii_controller_buttons.tga` in the same object.
+
+### 11. The OS asks for a password to set up memory
+
+`BATConfig`, which maps MEM1 and MEM2 through the BAT registers, ends in a
+loop that never exits unless its argument is `0xBA2CF`. The SDK's own caller
+passes it; anything else calling the function hangs there.

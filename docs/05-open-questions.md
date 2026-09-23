@@ -45,7 +45,18 @@ Resolved questions move to the bottom with the session that settled them.
     Gekko rounds frC to 25 bits first. `fres`/`frsqrte` are exact instead of
     table estimates. Where does the game notice? Differential runs against
     Dolphin (same inputs, compare memory) will tell.
-12. **OS cut**: SDK-function HLE or IOS IPC HLE (`07-next-session.md`).
+12. **Performance of the recompiled code**: the boot runs, but nothing has
+    been measured yet. The loop's frame rate, and what the 13 617
+    interrupt checks at back-edges cost, come with a visible frame.
+
+## Runtime
+
+13. **Where does the main loop wait?** `CGame::run` renders every frame and
+    waits for the retrace; which screen it shows, and whether it waits for a
+    Remote, will be seen with the renderer.
+14. **SYSCONF**: the NAND has none, and `SCCheckStatus` accepts that and
+    falls back to an empty configuration. Language, aspect ratio (the
+    engine has `vEnableWideScreen`) and sound mode will want a real one.
 
 ## Resolved
 
@@ -55,6 +66,11 @@ Resolved questions move to the bottom with the session that settled them.
   calls `bShake` (`08-input-and-rhythm.md`).
 * *Session 1* — **Are the ELF's symbols valid for the retail code?** Yes:
   its loaded bytes equal `main.dol`'s, section for section.
+* *Session 3* — **OS cut: SDK functions or IOS IPC?** Both, each where the
+  interface is narrowest: for threads only `OSLoadContext` (plus two
+  wrappers), since the SDK's scheduler funnels every switch through it; for
+  I/O the IPC registers, with IOS emulated as in Dolphin, so the SDK's
+  DVD, NAND and ES code runs recompiled (`11-runtime.md`).
 * *Session 2* — **Does the executable use `setjmp`/`longjmp` or fibers?**
   No `setjmp`/`longjmp` at all. `OSSwitchFiberEx` only in the Bluetooth
   USB callbacks, which the port drops.

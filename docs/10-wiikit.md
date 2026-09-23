@@ -23,12 +23,12 @@ consolidated into one package, with dependencies removed.
 | 2. Extract | Turn standard formats into standard files | `disc` (ISO and WBFS, AES, FST), `u8`, `tpl`, `gxtex`, `dsp` | palette formats C4/C8/C14X2, BRSTM/BRSAR, THP, BNR |
 | 3. Map code | What does the code do, where? | `dol` (DOL and ELF, one address map, symbols, `--same-as`, `--libs`), `cw` (CodeWarrior demangler), `ppc` (Gekko decoder with paired singles, disassembly, callers, lis/addi and SDA xrefs, instruction census) | SDK function signatures for stripped games, FIFO log decoding from The Last Story |
 | 4. Translate | Turn Gekko code into C++ | `recomp`: units and entry points to a fixed point, switch tables, one C++ function per entry, dispatch table, CMake project (`09-recompiler.md`) | stripped games (function discovery without symbols), faithful single-precision rounding |
-| 5. Runtime | Replace the hardware | `runtime/ppc.h` (the CPU model), `mem.cpp` (4 GiB guest space, DOL loading), `services_stub.cpp` | OS, DVD, NAND, KPAD, VI, AX mixer, GX FIFO renderer |
+| 5. Runtime | Replace the hardware | `ppc.h` (the CPU model), `core`/`mem` (guest space, dispatch, hooks), `os` (guest threads on host threads, interrupts, time), `hw` (PI, VI, DSP micro-codes, AI, EXI, SI, Hollywood), `gx` (FIFO and command parsing), `ios` + `disc` (IOS HLE at the IPC registers), `boot`, `wpad`, and `wiiboot` (`11-runtime.md`) | the GX renderer, the AX mixer, the mouse as a Remote, a window |
 
 ## Principles
 
 * Pure Python, no dependencies, for layers 1–4; the runtime (layer 5) is
-  C++20 with no dependencies so far. The ps2kit rule applies here
+  C++20 with no dependencies so far (the window and sound will bring SDL3). The ps2kit rule applies here
   too. The one exception is speed, not function: `aes` uses pycryptodome
   when it is installed (1.3 MB/s in pure Python, a whole disc in about 18
   minutes, against seconds), and gives the same bytes either way.
@@ -48,6 +48,7 @@ consolidated into one package, with dependencies removed.
 | `tpl`, `u8` | the Home Button archives on this disc (105 files; the icon decodes correctly) |
 | `dsp` | Crystal Bearers' audio, by ear and spectrogram |
 | `recomp` + `runtime` | Victorious: all 20 653 functions compile and link; the game's own `sprintf`, `strtod`, 64-bit division, `sin`/`cos`, `qsort` with game comparators, `PSMTX*` paired-single matrices and `memcpy`/`memset`, run natively, match the host in 15 of 15 tests |
+| `runtime` (hardware) | Victorious boots from `__start` to its main loop: the SDK's own `OSInit` report, its anti-modchip device check, the Bink logos, Wwise on AX, frames of GX commands |
 
 ## Known gaps
 

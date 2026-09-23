@@ -1,28 +1,27 @@
-# TODO — session 3
+# TODO — session 4
 
-Phase 2 of the plan: boot. Run `__start` natively and get as far as
-`CGame::init`, meeting the hardware one piece at a time.
+Phase 3 of the plan: graphics. The game runs its main loop and sends whole
+frames of GX commands; the goal is to see them. First target the screens
+the boot already goes through: the Wii Strap and health screens, the Bink
+logos, then the Scaleform menus.
 
-1. **Choose the cut for system services.** Two candidates, to decide by
-   reading the SDK code the game links:
-   * *SDK functions*: replace `OSCreateThread`, `DVDRead*`, `NANDOpen`…
-     with host code. It is direct, but there are many of them and they share
-     state.
-   * *IOS IPC*: let the SDK run as it is and answer its IPC requests
-     (`/dev/di`, `/dev/fs`, `/dev/es`, `/dev/stm`, `/dev/usb/oh1`…) at the
-     mailbox registers (`0xCD000000`), as Dolphin's IOS HLE does. Fewer and
-     better-defined entry points, and game-agnostic, so it suits wiikit.
-2. **Low memory**: the globals the IPL and apploader leave at `0x80000000`
-   (disc ID, memory size, arena bounds, bus and CPU clocks, the BI2 pointer,
-   OS globals), set before `__start` as Dolphin's HLE boot does.
-3. **Threads**: `OSLoadContext` and the scheduler (`SelectThread`,
-   `__OSDispatchInterrupt`) on host threads, one guest thread running at a
-   time; alarms and the decrementer from the host clock.
-4. **Console**: `OSReport` and friends to stdout. The first run will say
-   where it stops.
-5. **MMIO log**: every register the boot touches, with the function that
-   touched it: the to-do list for the rest of phase 2.
-6. **Side work**:
-   * a Dolphin FIFO log of the main menu, to size the GX renderer
-     (`05-open-questions.md` 9);
-   * read `readController` and `setDefaultControlMapping` (questions 1–2).
+1. **A window.** SDL3 with an OpenGL 4.5 context, driven from the clock
+   thread's VI retrace; `VISetNextFrameBuffer`'s address (VI TFBL) names
+   the XFB to present.
+2. **The GX state.** `gx.cpp` already parses the stream: keep BP, CP and XF
+   state per draw instead of only counting, and decode vertices through the
+   VCD/VAT and the CP array registers (indexed attributes).
+3. **TEV → GLSL**, one program per TEV configuration, cached; blending,
+   depth, culling, scissor and viewport from BP/XF.
+4. **Textures**: `wiikit.gxtex` (hardware-verified in The Last Story) ported
+   to C++, with TLUTs; a cache keyed by address and format.
+5. **EFB copies**: to the XFB (the frame) and to textures (Bink frames,
+   render targets). The XFB copy is the "frame done" of `writeEndOfFrame`.
+6. **Dolphin as the oracle**: a FIFO log of the boot screens, to check the
+   parser and the first frames (`05-open-questions.md` 9).
+7. **Side work**:
+   * where the main loop waits now: which screen, and whether it asks for a
+     Remote (phase 4 will answer with the mouse);
+   * the idle loop spins a host core: block the clock-less idle context on
+     the interrupt line instead;
+   * measure the loop's frame rate against the 59.94 Hz retrace.

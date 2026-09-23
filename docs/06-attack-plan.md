@@ -30,11 +30,10 @@ Why recompilation is unusually favourable here:
 |---|---|---|
 | CPU | recompiled | Gekko: PPC32 BE + paired singles + `psq_*` with GQRs. `bctrl` resolved through the function table, `bctr` through switch tables |
 | Graphics | **the GX FIFO** | The SDK's GX code runs recompiled and writes the command FIFO. We execute the commands (BP/CP/XF registers, primitives, display lists). One layer covers the engine, Scaleform, Bink and any inlined writes to `0xCC008000`. It is also the layer The Last Story's tooling already decodes (555 010 of 555 010 FIFO bytes) |
-| Audio | **AX** | A software mixer: DSP-ADPCM / PCM8 / PCM16 voices, sample-rate conversion, volume, loops. Wwise, Bink and the Home Button all sit on it |
-| Input | **KPAD** | `KPADRead` filled from the mouse (`08-input-and-rhythm.md`) |
-| Files | **DVD** | `DVDOpen/Read/Seek` on the extracted tree, or straight from the WBFS |
-| Saves | **NAND** | `NANDOpen/Read/Write` on a save folder |
-| System | **OS** | arena and heaps, threads, mutexes, conditions, message queues, alarms, time; cache operations become no-ops |
+| Audio | **AX, as a DSP micro-code** | The SDK's AX library runs recompiled and sends command lists to the DSP; the AX micro-code is emulated, as in Dolphin: a software mixer for its DSP-ADPCM / PCM8 / PCM16 voices, sample-rate conversion, volume, loops. Wwise, Bink and the Home Button all sit on it. Session 3 boots it silent |
+| Input | **WPAD/KPAD** | the public API replaced, the Bluetooth stack never starts; `KPADRead` filled from the mouse (`08-input-and-rhythm.md`) |
+| Files, saves, title | **IOS, at the IPC registers** | as built in session 3: the SDK's DVD, NAND and ES code runs recompiled; `/dev/di` reads the extracted tree, `/dev/fs` a host folder |
+| System | **OS** | as built: the scheduler, mutexes, queues, alarms run recompiled; only the context switch (`OSLoadContext`) is replaced, guest threads run on host threads one at a time, and interrupts arrive through the game's own handlers at safe points |
 | Video out | **VI** | a window; `VISetNextFrameBuffer` presents the copied frame |
 | Home Button, Bluetooth, low-level WPAD | stubs | not needed on PC |
 
@@ -70,7 +69,7 @@ once the FIFO renderer works and can serve as the reference.
 |---|---|---|
 | 0 | **Analysis** ✅ | disc, symbols, formats, input (session 1) |
 | 1 | **Recompiler: coverage** ✅ | every function in `.text` turns into C++ that **compiles**; switch tables resolved; address → function table. Done in session 2: all 20 653 functions compile and link, and the game's own library code runs natively in 15 of 15 differential tests (`09-recompiler.md`) |
-| 2 | **Runtime: boot** | `__start` → `main` → `CGame::init`; `OSReport` on the console; the PODs open through DVD HLE; the game reaches its first frame (black is fine) |
+| 2 | **Runtime: boot** ✅ | `__start` → `main` → `CGame::init`; `OSReport` on the console; the PODs open through DVD HLE; the game reaches its first frame (black is fine). Done in session 3, and beyond: `CGame::run`, the main loop, with the Bink logos played, Wwise on a silent AX and whole frames of GX commands (`11-runtime.md`) |
 | 3 | **Graphics** | FIFO command processor, BP/CP/XF state, TEV → GLSL, textures (`wiikit.gxtex` in C++), EFB copies. First target the Bink logos and the Scaleform menus, then an act in 3D. Frames compared with Dolphin |
 | 4 | **Input** | mouse → KPAD. Target: **play E1A1 with the mouse** |
 | 5 | **Audio** | AX mixer. Target: music and voices, and a **rhythm game in sync** with Wwise's beat callbacks |
