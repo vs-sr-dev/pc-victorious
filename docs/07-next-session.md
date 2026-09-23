@@ -1,25 +1,28 @@
-# TODO — session 2
+# TODO — session 3
 
-Phase 1 of the plan: the recompiler, up to "everything compiles".
+Phase 2 of the plan: boot. Run `__start` natively and get as far as
+`CGame::init`, meeting the hardware one piece at a time.
 
-1. **Semantics table**: for each of the 169 operations `--mix` reports,
-   the C++ it becomes, including Rc/OE/CR/XER side effects, `frsp` and
-   single-precision rounding, and paired singles with GQR (de)quantisation.
-   Start from the most frequent ops; `.long` must stay at zero.
-2. **Function map**: from `.symtab`, every function with its range; flag
-   functions whose code falls outside their symbol (tail merges, shared
-   epilogues `_savegpr_*` / `_restgpr_*`).
-3. **Switch tables**: find the 719 `bctr` sites, the `lis/addi/lwzx/mtctr`
-   pattern before each, and the table in `.data` / `.rodata`; list the
-   targets.
-4. **Emitter**: one C++ function per guest function, gotos for internal
-   branches, direct calls for `bl` to known functions, `ctx` for registers,
-   a dispatcher for `bctrl`.
-5. **Build**: generate the whole of `.text` and compile it (a CMake target
-   that only has to compile, not run). Count and fix what does not compile.
-6. **Side work**, if time allows:
-   * read `readController` (`05-open-questions.md` 1) and
-     `setDefaultControlMapping` (2);
-   * a Dolphin FIFO log of the main menu, to size the GX renderer (9).
-
-Not yet: the runtime. It waits until the generated code compiles.
+1. **Choose the cut for system services.** Two candidates, to decide by
+   reading the SDK code the game links:
+   * *SDK functions*: replace `OSCreateThread`, `DVDRead*`, `NANDOpen`…
+     with host code. It is direct, but there are many of them and they share
+     state.
+   * *IOS IPC*: let the SDK run as it is and answer its IPC requests
+     (`/dev/di`, `/dev/fs`, `/dev/es`, `/dev/stm`, `/dev/usb/oh1`…) at the
+     mailbox registers (`0xCD000000`), as Dolphin's IOS HLE does. Fewer and
+     better-defined entry points, and game-agnostic, so it suits wiikit.
+2. **Low memory**: the globals the IPL and apploader leave at `0x80000000`
+   (disc ID, memory size, arena bounds, bus and CPU clocks, the BI2 pointer,
+   OS globals), set before `__start` as Dolphin's HLE boot does.
+3. **Threads**: `OSLoadContext` and the scheduler (`SelectThread`,
+   `__OSDispatchInterrupt`) on host threads, one guest thread running at a
+   time; alarms and the decrementer from the host clock.
+4. **Console**: `OSReport` and friends to stdout. The first run will say
+   where it stops.
+5. **MMIO log**: every register the boot touches, with the function that
+   touched it: the to-do list for the rest of phase 2.
+6. **Side work**:
+   * a Dolphin FIFO log of the main menu, to size the GX renderer
+     (`05-open-questions.md` 9);
+   * read `readController` and `setDefaultControlMapping` (questions 1–2).

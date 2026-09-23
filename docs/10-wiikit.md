@@ -21,13 +21,14 @@ consolidated into one package, with dependencies removed.
 |---|---|---|---|
 | 1. Recognise | What is on this disc? | `disc --info`: game id, partitions, WBFS usage | a `fingerprint`: magics, SDK library dates, middleware found by symbol or string (Scaleform, Wwise, Bink, NW4R, Home Button) |
 | 2. Extract | Turn standard formats into standard files | `disc` (ISO and WBFS, AES, FST), `u8`, `tpl`, `gxtex`, `dsp` | palette formats C4/C8/C14X2, BRSTM/BRSAR, THP, BNR |
-| 3. Map code | What does the code do, where? | `dol` (DOL and ELF, one address map, symbols, `--same-as`, `--libs`), `cw` (CodeWarrior demangler), `ppc` (Gekko decoder with paired singles, disassembly, callers, lis/addi and SDA xrefs, instruction census) | switch-table recovery, SDK function signatures for stripped games, FIFO log decoding from The Last Story |
-| 4. Translate | Turn Gekko code into C++ | — | the recompiler (session 2 onward) |
-| 5. Runtime | Replace the hardware | — | OS, DVD, NAND, KPAD, VI, AX mixer, GX FIFO renderer |
+| 3. Map code | What does the code do, where? | `dol` (DOL and ELF, one address map, symbols, `--same-as`, `--libs`), `cw` (CodeWarrior demangler), `ppc` (Gekko decoder with paired singles, disassembly, callers, lis/addi and SDA xrefs, instruction census) | SDK function signatures for stripped games, FIFO log decoding from The Last Story |
+| 4. Translate | Turn Gekko code into C++ | `recomp`: units and entry points to a fixed point, switch tables, one C++ function per entry, dispatch table, CMake project (`09-recompiler.md`) | stripped games (function discovery without symbols), faithful single-precision rounding |
+| 5. Runtime | Replace the hardware | `runtime/ppc.h` (the CPU model), `mem.cpp` (4 GiB guest space, DOL loading), `services_stub.cpp` | OS, DVD, NAND, KPAD, VI, AX mixer, GX FIFO renderer |
 
 ## Principles
 
-* Pure Python, no dependencies, for layers 1–3. The ps2kit rule applies here
+* Pure Python, no dependencies, for layers 1–4; the runtime (layer 5) is
+  C++20 with no dependencies so far. The ps2kit rule applies here
   too. The one exception is speed, not function: `aes` uses pycryptodome
   when it is installed (1.3 MB/s in pure Python, a whole disc in about 18
   minutes, against seconds), and gives the same bytes either way.
@@ -46,6 +47,7 @@ consolidated into one package, with dependencies removed.
 | `gxtex` | The Last Story: byte-identical to textures Dolphin dumped from the running game |
 | `tpl`, `u8` | the Home Button archives on this disc (105 files; the icon decodes correctly) |
 | `dsp` | Crystal Bearers' audio, by ear and spectrogram |
+| `recomp` + `runtime` | Victorious: all 20 653 functions compile and link; the game's own `sprintf`, `strtod`, 64-bit division, `sin`/`cos`, `qsort` with game comparators, `PSMTX*` paired-single matrices and `memcpy`/`memset`, run natively, match the host in 15 of 15 tests |
 
 ## Known gaps
 

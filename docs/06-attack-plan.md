@@ -48,8 +48,9 @@ once the FIFO renderer works and can serve as the reference.
 * The **recompiler** is written in Python on top of `wiikit.ppc`: symbols
   + decoder → one C++ function per guest function, over a context of GPRs,
   FPRs with their paired-single halves, CR, XER, LR, CTR, FPSCR and GQRs.
-  It becomes wiikit's layer 4.
-* The **runtime** is C++20 (CMake; MSVC or clang-cl) with **SDL3** for window,
+  It is wiikit's layer 4 (`wiikit/recomp`, `09-recompiler.md`).
+* The **runtime** is C++20 (CMake + Ninja; clang 22 from MSYS2 so far, with
+  MSVC-compatible code) with **SDL3** for window,
   input and audio. **OpenGL 4.5** is the first graphics API, because TEV
   configurations turn into GLSL at run time with the least ceremony. Vulkan
   or D3D12 can come later.
@@ -68,7 +69,7 @@ once the FIFO renderer works and can serve as the reference.
 | # | Phase | Checkable milestone |
 |---|---|---|
 | 0 | **Analysis** ✅ | disc, symbols, formats, input (session 1) |
-| 1 | **Recompiler: coverage** | every function in `.text` turns into C++ that **compiles**; switch tables resolved; address → function table |
+| 1 | **Recompiler: coverage** ✅ | every function in `.text` turns into C++ that **compiles**; switch tables resolved; address → function table. Done in session 2: all 20 653 functions compile and link, and the game's own library code runs natively in 15 of 15 differential tests (`09-recompiler.md`) |
 | 2 | **Runtime: boot** | `__start` → `main` → `CGame::init`; `OSReport` on the console; the PODs open through DVD HLE; the game reaches its first frame (black is fine) |
 | 3 | **Graphics** | FIFO command processor, BP/CP/XF state, TEV → GLSL, textures (`wiikit.gxtex` in C++), EFB copies. First target the Bink logos and the Scaleform menus, then an act in 3D. Frames compared with Dolphin |
 | 4 | **Input** | mouse → KPAD. Target: **play E1A1 with the mouse** |

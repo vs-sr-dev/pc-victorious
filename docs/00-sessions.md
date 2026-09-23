@@ -55,3 +55,52 @@ only, and capstone cannot decode `fcmpo` at all. capstone reads the paired
 singles as POWER VSX, so for those the check is structural: all 1 393
 functions that save f14–f31 with `psq_st` restore the same registers from
 the same offsets.
+
+## Session 2 — the recompiler: the whole executable compiles, and runs
+
+Goal: phase 1 of the plan, every function turned into C++ that compiles.
+
+Results:
+
+* **The program model** (`wiikit/recomp/program.py`): 20 622 units (the
+  sized function symbols plus three gaps of hand-written code), 20 653 entry
+  points found to a fixed point. The 31 entries inside units are
+  CodeWarrior's `__save_gpr`/`__restore_gpr` entry points and three TRK
+  stubs. Before writing it, the control flow was measured: every `bl` to the
+  middle of a function lands in those register save/restore routines, every
+  unconditional branch out of a function lands on a function start (2 564
+  tail calls), and only two functions (the OS exception vectors) have no
+  terminator.
+* **Switch tables**: 266 found from the `lwzx`/`mtctr`/`bctr` pattern, sized
+  by the table's own data symbol. One base is lost across a branch in
+  `CVoxelGrid::insert` and is recovered by a fallback: the only data table
+  whose entries all point into that function. Of the other `bctr`, 447
+  take CTR from a `lwz`, virtual tail calls (`lwz r12, off(r12); mtctr r12;
+  bctr`), and 6 go through function pointers.
+* **The emitter** (`wiikit/recomp/emit.py`) covers all 169 operations the
+  game uses. The CPU model is `wiikit/runtime/ppc.h`: Gekko's paired singles
+  with GQR quantisation, and single-precision results filling both halves as
+  in Dolphin.
+* **It compiles and links**: 1 661 203 instructions → 201 files, 124 MB of
+  C++ in 16 s; clang 22 at `-O1` builds it in 1 min 38 s on 18 threads, and
+  the link check holds all 20 653 functions in one 58 MB executable. The one
+  compile error of the first build was `__OSDBJump`'s absolute call to the
+  debugger stub at `0x60`, which no longer becomes a direct call.
+* **It runs** (`tools/selftest.cpp`): the retail `main.dol` is loaded into a
+  4 GiB guest address space and the game's own recompiled code is called
+  natively. `sprintf` produces byte-identical output with varargs and
+  doubles. `__div2i`/`__mod2i`/`__div2u` are right on 2 000 random pairs,
+  `sin`/`cos` within 4e-21, and `qsort` sorts through two different game
+  comparators by indirect calls. The SDK's paired-single `PSMTXConcat`,
+  `PSMTXMultVec` and `PSMTXInverse` agree with the host, and `memcpy` is
+  bit-exact through the FPRs for 200 random sizes and alignments.
+  **15 of 15.**
+
+Two mistakes on the way, both in the test, not the recompiler: "Hollywood
+Arts High School" has 26 characters, not 27, and the `memset` check read
+bytes that the previous test had left in the scratch area.
+
+Also settled: no `setjmp`/`longjmp` anywhere in the executable, and
+`OSSwitchFiberEx` only in Bluetooth code the port drops. Thread switching is
+`OSLoadContext`, called from the scheduler, interrupts and exceptions: a
+clean cut for phase 2.

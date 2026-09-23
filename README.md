@@ -19,14 +19,18 @@ the North American release, S2VEG9.
 
 ## Layout
 
-    docs/     disc, format and code analysis, and the plan
-    tools/    Victorious-specific tools
-    wiikit/   game-agnostic Wii toolkit
+    docs/            disc, format and code analysis, and the plan
+    tools/           Victorious-specific tools, and the native self-test
+    wiikit/          game-agnostic Wii toolkit
+    wiikit/recomp/   the static recompiler (Gekko -> C++)
+    wiikit/runtime/  the C++ side: CPU model, guest memory, services
 
 ## Tools
 
-Everything needs only Python 3.8+ and no dependencies (pycryptodome, if
-installed, speeds up disc decryption). Run from the repository root.
+The Python tools need only Python 3.8+ and no dependencies (pycryptodome,
+if installed, speeds up disc decryption). Building the recompiled code needs
+CMake, Ninja and a C++20 compiler (clang 22 from MSYS2 is what is used here).
+Run from the repository root.
 
 ```sh
 # the disc: header, partitions; extract the DATA partition (.iso or .wbfs)
@@ -56,12 +60,28 @@ python tools/gfx.py build/pod/WIIART/flash --census
 python tools/gfx.py build/pod/WIIART/flash/rhythmgamecontrol.gfx --strings
 python tools/songs.py build/pod/WIICOMMON/data/songs
 
+# recompile the executable to C++, build it, run the game's code natively
+python -m wiikit.recomp $ELF --out build/recomp
+cmake -S build/recomp -B build/recomp-build -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O1 \
+    -DWIIKIT_EXTRA=$PWD/tools/selftest.cmake
+ninja -C build/recomp-build
+build/recomp-build/selftest build/extract/sys/main.dol build/symbols.tsv
+
 # standard Wii formats
 python -m wiikit.u8 build/extract/files/HomeButton2/homeBtn.arc
 python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
 ```
 
 ## Status
+
+Session 2: **the whole executable recompiles to C++, compiles, links and
+runs.** All 20 653 functions (1.66 million instructions) become 124 MB of
+C++ that clang builds in under two minutes, and the game's own code, run
+natively on the retail `main.dol` image, matches the host in 15 of 15 tests:
+its `sprintf`, 64-bit division, libm, `qsort` through its comparators, the
+SDK's paired-single matrix library, its FPR-based `memcpy`. Next: booting it
+(`__start` to `CGame::init`).
 
 Session 1: the disc is read and mapped, and the developers' symbolised ELF
 turns out to be on it, byte-identical to the retail executable, with 20 619
@@ -88,6 +108,7 @@ See [docs/00-sessions.md](docs/00-sessions.md) for the log,
     06-attack-plan.md         the porting route
     07-next-session.md        the plan for the next session
     08-input-and-rhythm.md    the input path, and the rhythm game's shake
+    09-recompiler.md          the recompiler, the CPU model, the native tests
     10-wiikit.md              the game-agnostic toolkit
 
 ## Licence

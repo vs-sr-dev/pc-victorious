@@ -39,6 +39,14 @@ Resolved questions move to the bottom with the session that settled them.
 10. **Frame rate**: 30 or 60 Hz, and how the rhythm game's clock relates to
     the audio clock (`soundBeatCallback`).
 
+## Recompiler fidelity
+
+11. **Single-precision rounding**: `fmadds` & co. round once from double;
+    Gekko rounds frC to 25 bits first. `fres`/`frsqrte` are exact instead of
+    table estimates. Where does the game notice? Differential runs against
+    Dolphin (same inputs, compare memory) will tell.
+12. **OS cut**: SDK-function HLE or IOS IPC HLE (`07-next-session.md`).
+
 ## Resolved
 
 * *Session 1* — **Is any minigame motion-controlled?** Only the rhythm
@@ -47,3 +55,6 @@ Resolved questions move to the bottom with the session that settled them.
   calls `bShake` (`08-input-and-rhythm.md`).
 * *Session 1* — **Are the ELF's symbols valid for the retail code?** Yes:
   its loaded bytes equal `main.dol`'s, section for section.
+* *Session 2* — **Does the executable use `setjmp`/`longjmp` or fibers?**
+  No `setjmp`/`longjmp` at all. `OSSwitchFiberEx` only in the Bluetooth
+  USB callbacks, which the port drops.
