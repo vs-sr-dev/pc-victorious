@@ -120,15 +120,13 @@ a third taller.
 | `WIIKIT_SHADERDUMP=DIR` | every generated program's source, and the uniforms of its first draw |
 | `WIIKIT_VIDBG=1` | VI register writes |
 | `WIIKIT_GLDEBUG=1` | a debug GL context, errors to the console |
-| `WIIKIT_PAD="50:A 70:A 72:@0.2,-0.1"` | scripted Remote input: buttons pressed for 150 ms at those seconds, or the pointer moved |
+| `WIIKIT_PAD="50:A 70:A 72:@0.2,-0.1"` | scripted Remote input: buttons (A B 1 2 + - H U D L R, X a shake) pressed for 150 ms at those seconds, or the pointer moved |
 
 ## A Remote for testing
 
-To get past "Press A", channel 0 now holds a Remote driven by the host
-(`wpad.cpp`): Enter, Z or the left mouse button for A; X, Backspace or the
-right button for B; the arrows for the d-pad; +, −, 1, 2, H; the mouse over
-the picture as the pointer. It is a debugging bridge; the mouse-driven
-Remote proper is phase 4.
+Session 4 put a debugging Remote on channel 0 to get past "Press A"; in
+session 5 it became the mouse-driven Remote (`08-input-and-rhythm.md`).
+`WIIKIT_PAD` still scripts it, with X for a shake.
 
 ## Not done yet
 

@@ -71,9 +71,9 @@ once the FIFO renderer works and can serve as the reference.
 | 1 | **Recompiler: coverage** ✅ | every function in `.text` turns into C++ that **compiles**; switch tables resolved; address → function table. Done in session 2: all 20 653 functions compile and link, and the game's own library code runs natively in 15 of 15 differential tests (`09-recompiler.md`) |
 | 2 | **Runtime: boot** ✅ | `__start` → `main` → `CGame::init`; `OSReport` on the console; the PODs open through DVD HLE; the game reaches its first frame (black is fine). Done in session 3, and beyond: `CGame::run`, the main loop, with the Bink logos played, Wwise on a silent AX and whole frames of GX commands (`11-runtime.md`) |
 | 3 | **Graphics** ✅ | FIFO command processor, BP/CP/XF state, TEV → GLSL, textures (`wiikit.gxtex` in C++), EFB copies. First target the Bink logos and the Scaleform menus, then an act in 3D. Done in session 4: from the Wii Strap screen through the Bink logos and the Scaleform menus to the first classroom in 3D, at the game's 30 frames a second (`12-renderer.md`). Frames not yet compared with Dolphin |
-| 4 | **Input** | mouse → KPAD. Target: **play E1A1 with the mouse** |
+| 4 | **Input** ✅ | mouse → KPAD. Target: **play E1A1 with the mouse**. Done in session 5: the pointer one to one with the mouse, A, B and the shake on the mouse and keys, E1A1 played through to its rhythm game and that played too (`08-input-and-rhythm.md`) |
 | 5 | **Audio** | AX mixer. Target: music and voices, and a **rhythm game in sync** with Wwise's beat callbacks |
-| 6 | **PC finish** | window and fullscreen, higher internal resolution, widescreen (the engine has `vEnableWideScreen`), saves, key remapping, two players, no Home Button |
+| 6 | **PC finish** | window and fullscreen, higher internal resolution, widescreen (the engine has `vEnableWideScreen`), saves, key remapping, two players (the Home Button is already answered by the port's own box) |
 
 Phases 3, 4 and 5 interleave once the first frame is up.
 

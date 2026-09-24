@@ -20,7 +20,7 @@ the North American release, S2VEG9.
 ## Layout
 
     docs/            disc, format and code analysis, and the plan
-    tools/           Victorious-specific tools, and the native self-test
+    tools/           Victorious-specific tools, the port's own layer over the runtime, the native self-test
     wiikit/          game-agnostic Wii toolkit
     wiikit/recomp/   the static recompiler (Gekko -> C++)
     wiikit/runtime/  the C++ side: CPU model, guest memory, OS, hardware, IOS, the renderer; wiiboot
@@ -72,9 +72,9 @@ build/recomp-build/selftest build/extract/sys/main.dol build/symbols.tsv
 
 # boot the game: the NAND in build/nand, the boot ROM's fonts in build/fonts
 # (font_western.bin, font_japanese.bin: Dolphin's Sys/GC has free ones)
-# a window opens; debugging keys until the mouse-driven Remote: Enter, Z or
-# the left button = A, X or the right button = B, arrows = d-pad, +, -, 1, 2;
-# the mouse over the picture is the pointer
+# a window opens; the mouse is the Wii Remote's pointer: left button or
+# Enter = A, right button or Backspace = B, W A S D or the arrows = d-pad,
+# Tab = +, Q = -, 1 and 2, Space or the middle button = shake; Esc pauses
 build/recomp-build/wiiboot build/extract --symbols build/symbols.tsv
 build/recomp-build/wiiboot build/extract --scale 2 --dump build/shots --dump-every 300
 build/recomp-build/wiiboot build/extract --no-video --watch 10     # no window
@@ -85,6 +85,14 @@ python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
 ```
 
 ## Status
+
+Session 5: **the game is played with the mouse.** The pointer follows the
+mouse one to one (the game's own cursor smoothing is lifted by the port's
+layer, the first code only Victorious needs), A and B are the mouse's
+buttons, the rhythm game's shake is Space, and Esc opens the port's own
+pause box in place of the Wii's Home Button menu. The first act, E1A1, was
+played by hand from the classroom tutorial through the school to its rhythm
+game, which keeps time even without sound. Next is the sound.
 
 Session 4: **the game is drawn.** The GX command stream is decoded on the
 game's side and drawn with OpenGL 4.5 on the host's main thread: the TEV
@@ -135,7 +143,7 @@ See [docs/00-sessions.md](docs/00-sessions.md) for the log,
     05-open-questions.md      what is still unknown
     06-attack-plan.md         the porting route
     07-next-session.md        the plan for the next session
-    08-input-and-rhythm.md    the input path, and the rhythm game's shake
+    08-input-and-rhythm.md    the input path, the controls, the mouse as the Remote, the rhythm game
     09-recompiler.md          the recompiler, the CPU model, the native tests
     10-wiikit.md              the game-agnostic toolkit
     11-runtime.md             the runtime: OS, interrupts, IOS, DSP, GX; the boot step by step

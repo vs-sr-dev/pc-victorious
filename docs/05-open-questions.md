@@ -4,14 +4,6 @@ Resolved questions move to the bottom with the session that settled them.
 
 ## Input
 
-1. **What is `SController+0xC8`?** `CGame::bGetShake` compares its absolute
-   value with `sGVar_fShakeThreshold`. It is filled in `readController`
-   (`805FA500`) from `KPADStatus`: raw acceleration, `acc_speed`, or a
-   filtered value (the debug menu has "Shake frames filer")? The mouse/key
-   substitute must produce the same kind of value.
-2. **Logical controls 0x18 and 0x19** are A and B for the rhythm game; the
-   whole table comes from `CGame::setDefaultControlMapping`. It should be
-   read out once, for all controls.
 3. **`wii_nunchuk_*.tga`** (7 languages): a controller-help screen, or is the
    Nunchuk used somewhere?
 4. **Two-player rhythm mode** (`is2PlayerRhythmGameActive`): how does the
@@ -59,6 +51,13 @@ Resolved questions move to the bottom with the session that settled them.
 
 ## Resolved
 
+* *Session 5* — **What is `SController+0xC8`?** `KPADStatus.acc_speed`,
+  the change of acceleration between samples. `bGetShake` wants it at 0.4
+  or more in each of the last two frames (`08-input-and-rhythm.md`).
+* *Session 5* — **The logical controls.** 42 entries; the game proper asks
+  only for the pointer (0x10, 0x14), A (0x18) and B (0x19). The rest serve
+  engine leftovers (cars, boats, a free camera) and debugging; the menus
+  read the button slots directly (`08-input-and-rhythm.md`).
 * *Session 4* — **Which GX features the game really uses**, as far as the
   first classroom: up to five TEV stages, indirect textures (Bink's
   un-swizzling, two indirect stages), signed TEV colour registers, konst

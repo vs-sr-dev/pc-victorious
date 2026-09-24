@@ -100,3 +100,30 @@ logos on, the game renders and copies 640 × 360 frames, 16:9, and has VI
 scan them out as 360 of the 480 lines, black above and below: widescreen
 presentation on a 4:3 setting, done in the video interface rather than
 in the renderer.
+
+### 14. The cursor is smoothed twice
+
+KPAD already smooths the Remote's pointer (`KPADSetPosParam`). The
+adventure cursor then smooths it again: each frame it moves 30% of the way
+to where the Remote points, and ignores moves under 0.02. On a Remote held
+in the air that turns a trembling hand into a steady cursor; under a mouse
+it is a cursor that trails about a fifth of a second behind
+(`08-input-and-rhythm.md`).
+
+### 15. The control table remembers cars and boats
+
+Of the 42 logical controls `setDefaultControlMapping` sets up, the game
+asks for four: the pointer's two axes, A and B. Most of the others are read
+only by `CCar::process`, `CBoat::process`, `CPhysBallActor` and a
+free-flying debugging camera, driven by the Nunchuk's stick. They are the
+Infernal Engine's, from games where one drove; nothing in Hollywood Arts
+calls them.
+
+### 16. The rhythm game keeps time in silence
+
+The rhythm game's beats come from Wwise (`soundBeatCallback`), and the port
+has no sound yet: AX runs, mixes nothing and plays nothing. The rhythm game
+keeps time anyway: played through in session 5, every press, hold and
+shake landed in its window. Presumably Wwise advances its music by the AX
+frames it is asked to render, heard or not; that is to be checked when the
+mixer comes, since it is also what keeps the game in sync.

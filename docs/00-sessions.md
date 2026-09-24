@@ -205,3 +205,46 @@ Results:
   through its last 2 ms. At the title screen the process went from 1.85
   host cores to 0.27; the classroom takes about one.
 * The native self-test still passes, 15 of 15.
+
+## Session 5 — input: the mouse as the Wii Remote
+
+Goal: phase 4 of the plan. Replace the debugging Remote with the mouse, well
+enough to play the first act, E1A1.
+
+Results:
+
+* **The input path read out** (`08-input-and-rhythm.md`): what
+  `readController` copies from each `KPADStatus` into the game's
+  `SController`, the button slots, and the 42 logical controls of
+  `setDefaultControlMapping`. The game proper asks for four: the pointer's
+  two axes, A and B; the menus read the button slots directly, + opens the
+  pause menu, and Home runs the SDK's own Home Button menu. The two input
+  questions left open since session 1 are closed: the shake is KPAD's
+  `acc_speed`, over 0.4 for two frames running.
+* **The mouse is the pointer, one to one.** Two things stood between them.
+  The pointer was spread over the whole 4:3 screen while the game shows
+  360 of its 480 lines, so the cursor moved a quarter less than the mouse
+  vertically: −1..1 now spans the picture VI shows. And the adventure
+  cursor smooths the pointer again after KPAD, 30% of the way per frame,
+  about a fifth of a second of lag with a mouse: the port puts it on its
+  target each frame. The Windows pointer hides over the picture; the game
+  draws its own.
+* **A port's own layer.** That fix is the first thing only Victorious needs,
+  so it does not go into wiikit: `tools/victorious.cpp` is linked into
+  `wiiboot` by the project's CMake file, registers itself with the runtime
+  (`RtGameLayer`), and replaces the functions of a second hook list that
+  the recompiler takes with `--hooks`. Rebuilding after a new hook
+  recompiled only the files it touched.
+* **The controls**: the mouse's buttons for A and B, W A S D for the d-pad,
+  Tab for +, Q for −, 1 and 2, Space or the middle button for a shake. Home
+  has no key: Esc opens a native pause box (Resume, Quit) in place of the
+  Wii's menu, whose "Wii Menu" and "Reset" mean nothing on a PC.
+* **E1A1 played**, by hand, for twelve minutes: the classroom tutorial,
+  dialogue, the inventory and its side-quest items, menus, cutscenes, the
+  hunt for Sikowitz's pages through the school, and the rhythm game, where
+  A, B and the shake each land, and A and B in all three of the game's
+  forms (a press, a hold, a run of presses). The rhythm game keeps time
+  though nothing is heard yet; the track of icons that pulse on the beat
+  makes it playable by eye as well. 204 shader programs, 3.6 million draws,
+  and not one report of a GX feature the renderer lacks.
+* The native self-test still passes, 15 of 15.

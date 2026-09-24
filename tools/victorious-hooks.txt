@@ -1,0 +1,5 @@
+# Victorious: the functions victorious.cpp replaces, on top of
+# wiikit/runtime/hooks.txt:
+#     python -m wiikit.recomp GAME.elf --out build/recomp --hooks tools/victorious-hooks.txt
+
+vUpdateInput__16CAdventureCursorFf   # the adventure cursor's smoothing

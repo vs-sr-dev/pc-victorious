@@ -180,11 +180,19 @@ device has been detected". The emulated drive has to fail exactly.
 ## The Wii Remote (`wpad.cpp`)
 
 The public WPAD and KPAD API is replaced: WPAD is ready, and one Remote is
-connected, on channel 0, driven by the host: for now debugging keys and the
-mouse as a raw pointer (`12-renderer.md`), filling one 0xF0-byte
-`KPADStatus` per `KPADRead`. The Bluetooth stack (WUD, BTA/BTE) never
-starts, so nothing waits for the HCI dongle. The mouse-driven Remote proper
-is phase 4.
+connected, on channel 0, driven by the host: the mouse as the pointer,
+keys for the buttons and the shake (`08-input-and-rhythm.md`), filling one
+0xF0-byte `KPADStatus` per `KPADRead`. The Bluetooth stack (WUD, BTA/BTE)
+never starts, so nothing waits for the HCI dongle.
+
+## A port's own layer
+
+Whatever only one game needs stays out of wiikit: a project links its own
+code into `wiiboot` through its `WIIKIT_EXTRA` CMake file, and that code
+registers itself with a static `RtGameLayer`, whose install function
+`wiiboot` runs after the runtime's hooks. The functions it replaces are
+given to the recompiler as a second hook list (`--hooks`). Victorious's
+layer is `tools/victorious.cpp`, with `tools/victorious-hooks.txt`.
 
 ## The boot, step by step
 
