@@ -20,10 +20,10 @@ the North American release, S2VEG9.
 ## Layout
 
     docs/            disc, format and code analysis, and the plan
-    tools/           Victorious-specific tools, the port's own layer over the runtime, the native self-test
+    tools/           Victorious-specific tools, the port's own layer over the runtime, the native self-test, the profile resolver
     wiikit/          game-agnostic Wii toolkit
     wiikit/recomp/   the static recompiler (Gekko -> C++)
-    wiikit/runtime/  the C++ side: CPU model, guest memory, OS, hardware, IOS, the renderer; wiiboot
+    wiikit/runtime/  the C++ side: CPU model, guest memory, OS, hardware, IOS, the renderer, the audio; wiiboot
 
 ## Tools
 
@@ -70,14 +70,20 @@ cmake -S build/recomp -B build/recomp-build -G Ninja -DCMAKE_CXX_COMPILER=clang+
 ninja -C build/recomp-build
 build/recomp-build/selftest build/extract/sys/main.dol build/symbols.tsv
 
-# boot the game: the NAND in build/nand, the boot ROM's fonts in build/fonts
-# (font_western.bin, font_japanese.bin: Dolphin's Sys/GC has free ones)
+# boot the game: the NAND in build/nand; the boot ROM's fonts and the DSP
+# ROM's resampling table in build/fonts (font_western.bin, font_japanese.bin,
+# dsp_coef.bin: Dolphin's Sys/GC has free ones)
 # a window opens; the mouse is the Wii Remote's pointer: left button or
 # Enter = A, right button or Backspace = B, W A S D or the arrows = d-pad,
 # Tab = +, Q = -, 1 and 2, Space or the middle button = shake; Esc pauses
 build/recomp-build/wiiboot build/extract --symbols build/symbols.tsv
 build/recomp-build/wiiboot build/extract --scale 2 --dump build/shots --dump-every 300
 build/recomp-build/wiiboot build/extract --no-video --watch 10     # no window
+build/recomp-build/wiiboot build/extract --no-audio                # no sound
+
+# where the time goes: per-frame figures, and a sampling profiler (Windows)
+WIIKIT_PERF=1 WIIKIT_PROFILE=1 build/recomp-build/wiiboot build/extract 2> run.err
+python tools/profile_resolve.py build/recomp-build/wiiboot.exe run.err build/symbols.tsv
 
 # standard Wii formats
 python -m wiikit.u8 build/extract/files/HomeButton2/homeBtn.arc
@@ -85,6 +91,16 @@ python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
 ```
 
 ## Status
+
+Session 6: **the game has sound.** Wwise plays on the DSP's hardware voices,
+so the DSP's mixer is now C++: the AX command list, DSP-ADPCM, the polyphase
+resampler, envelopes, filters, the aux effects' round trip through the CPU.
+Music, voices (the series' cast), effects and the Bink movies' sound are
+heard, through SDL3 with 20 ms of latency, and the rhythm game is played by
+ear. The heaviest scene so far, a nightclub, went from 17 to a steady
+30 fps once a sampling profiler showed where the time went: a libm call in
+every quantised paired-single load, and fresh memory for the GX record.
+Next is the PC finish: widescreen, fullscreen, resolution.
 
 Session 5: **the game is played with the mouse.** The pointer follows the
 mouse one to one (the game's own cursor smoothing is lifted by the port's
@@ -148,6 +164,7 @@ See [docs/00-sessions.md](docs/00-sessions.md) for the log,
     10-wiikit.md              the game-agnostic toolkit
     11-runtime.md             the runtime: OS, interrupts, IOS, DSP, GX; the boot step by step
     12-renderer.md            the renderer: GX on OpenGL, TEV to GLSL, EFB copies, VI
+    13-audio.md               the audio: the AX mixer in C++, the way to the speakers, latency
 
 ## Licence
 

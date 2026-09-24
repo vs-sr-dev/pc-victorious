@@ -15,7 +15,8 @@ Resolved questions move to the bottom with the session that settled them.
    reference lists; the code itself is not decoded. Not needed for a
    recompiled port, useful for understanding scripts.
 6. **Wwise media**: where the DSP coefficients sit in the RIFX `fmt ` chunk
-   (format tag 2, 0x4C bytes).
+   (format tag 2, 0x4C bytes). No longer needed to play them (the AX mixer
+   reads them from the voices' parameter blocks); useful for extracting.
 7. Formats named but not described: `.tex`, `.smb`, `.bfm`, `.skb`, `.ani`,
    `.mtb`, `.bst`, `.cinemat`, `.tfb`, `.phys2b`, `.cib`, `.atb`, `.lvl`.
    They are not needed for a recompiled port (the game reads them itself)
@@ -25,8 +26,11 @@ Resolved questions move to the bottom with the session that settled them.
 
 8. **Debug features in the retail build**: `DebugLevelSelectScreen` (with
    its `.swf`), `CDevMenuNode`, `CEditorTools`, cheat processing. Reachable?
-10. **The rhythm game's clock**: how it relates to the audio clock
-    (`soundBeatCallback`), now that the frame rate is known (30 Hz).
+10. **Rhythm latency compensation.** The rhythm game judges presses on its
+    audio clock; the player hears and sees 20 ms of audio queue plus the
+    device's buffer, and up to two frames of renderer queue, later. Taking
+    that off the press time where `CDebugRhythmGameUI::debugRender` makes it
+    (it reaches `addnewInputs`) would make the best grades land on the beat.
 
 ## Recompiler fidelity
 
@@ -51,6 +55,14 @@ Resolved questions move to the bottom with the session that settled them.
 
 ## Resolved
 
+* *Session 6* — **The rhythm game's clock**: Wwise's beat callbacks follow
+  the AX frames it renders, and the AI paces those on the host clock; with
+  sound on, the game stays in time with what is heard, up to the output's
+  latency (question 10 now).
+* *Session 6* — **Performance with the renderer on**: the heaviest scene so
+  far (the first episode's nightclub) holds 30 fps, the game's thread idle
+  60% of the time, once psq_l/psq_st stopped calling `ldexp` and the GX
+  record stopped allocating (`11-runtime.md`, Measuring).
 * *Session 5* — **What is `SController+0xC8`?** `KPADStatus.acc_speed`,
   the change of acceleration between samples. `bGetShake` wants it at 0.4
   or more in each of the last two frames (`08-input-and-rhythm.md`).

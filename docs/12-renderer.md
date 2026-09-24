@@ -37,7 +37,7 @@ XFB copy                         ── FRAME ──►  VI retrace: present TFB
 The GP is always idle in this runtime: the game sees every command consumed
 at once, and may reuse a vertex buffer, a texture or a display list the
 moment it has sent it. Reading them at parse time makes that safe, and the
-renderer can then run behind the game on its own thread: at most two frames
+renderer can then run behind the game on its own thread: at most two frames (`--frames-ahead`)
 behind, after which the game waits. Only one host thread ever touches
 OpenGL, although several guest threads draw.
 
@@ -111,6 +111,15 @@ a third taller.
 |---|---|---|
 | short one-pixel lines across the Bink videos, at fixed rows | Bink draws with a swizzled Y plane (640 × 448) and two chroma planes, and un-swizzles them through two tiny index textures (128 × 4 and 64 × 4) whose texels are offsets for the indirect stages. Many samples land exactly on a texel edge; the float interpolation fell a hair short of the fixed-point value (12799.9997 for 12800) and nearest filtering took the texel before | texture coordinates are rounded to fixed point, not truncated, and sampled half a unit inside the texel |
 | the title screen and the game stretched vertically | the 360-line XFBs presented as full 4:3 | the picture's height from VI's active lines (above) |
+
+## The write-gather pipe
+
+CPU stores to `0xCC008000` collect in a 32-byte buffer and reach the FIFO in
+memory, and the parser, as 32-byte bursts, as on the console; the SDK's
+`GXFlush` pads the last burst out. The stores take no lock; a burst does.
+The record's buffers are recycled between the game's side and the renderer:
+the nightclub sends about 100 000 vertices a frame, 13 MB of record, and
+fresh allocations cost more than the decoding (`11-runtime.md`, Measuring).
 
 ## The debugging aids
 

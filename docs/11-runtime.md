@@ -35,7 +35,7 @@ the interface is narrow and the same for every game.
 | Interrupts | the exception vector | delivered at safe points through the game's own handlers |
 | Disc, NAND, ES, STM | **the IPC registers** | the SDK's IOS client runs recompiled; IOS itself is emulated, as in Dolphin |
 | GX | the write-gather pipe and CP/PE registers | the command stream is parsed, decoded and drawn with OpenGL (`12-renderer.md`) |
-| DSP | the mailboxes | the ROM, init and AX micro-codes in HLE |
+| DSP | the mailboxes | the ROM, init and AX micro-codes in HLE; AX mixes in C++ (`13-audio.md`) |
 | Wii Remote | **the WPAD/KPAD API** | the Bluetooth stack below never starts |
 | Console | `__write_console` | MSL's output: `printf`, `OSReport` |
 
@@ -153,7 +153,9 @@ two-frame queue. An armed breakpoint is therefore reached at once.
   and a command list; AX answers `0xDCD10002` (yield), the task manager
   replies `0xCDD10003` and calls AX's resume callback, which prepares the
   next frame on the next AI DMA interrupt (every 3 ms: 0x180 bytes of 16-bit
-  stereo at 32 kHz). The lists are not mixed yet.
+  stereo at 32 kHz). Since session 6 each list is mixed before the answer
+  (`ax.cpp`, `13-audio.md`), and each AI DMA block goes to the host's audio
+  device as it starts.
 
 ## IOS (`ios.cpp`, `disc.cpp`)
 
@@ -193,6 +195,26 @@ registers itself with a static `RtGameLayer`, whose install function
 `wiiboot` runs after the runtime's hooks. The functions it replaces are
 given to the recompiler as a second hook list (`--hooks`). Victorious's
 layer is `tools/victorious.cpp`, with `tools/victorious-hooks.txt`.
+
+## Measuring
+
+| Environment | |
+|---|---|
+| `WIIKIT_PERF=1` | every second: fps, frame time, and on the game's thread the time spent decoding vertices and textures and waiting for the renderer; the renderer's time |
+| `WIIKIT_PROFILE=1` | (Windows) a sampling profiler of the thread holding the baton, ~600 samples a second; every ten seconds the hottest addresses, and for samples inside a DLL the executable's function that called in (unwound on a copy of the stack) |
+
+`python tools/profile_resolve.py build/recomp-build/wiiboot.exe run.err
+build/symbols.tsv` names the addresses with `nm`: runtime functions by their
+C++ names, recompiled ones by their guest names.
+
+Session 6's case, the nightclub of the first episode at 16-19 fps: the
+renderer busy a quarter of the time; on the game's thread about 40% in
+`std::ldexp` (every
+`psq_l` and `psq_st` computed its GQR scale with a libm call, and the
+engine skins on the CPU with quantised paired singles) and about 30% in page
+faults and copies of the GX record (a fresh vector every megabyte). With the
+scale built from its exponent bits and the record's buffers recycled, the
+scene runs at 30 fps with the game's thread idle 60% of the time.
 
 ## The boot, step by step
 

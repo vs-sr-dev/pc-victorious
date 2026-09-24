@@ -119,11 +119,21 @@ free-flying debugging camera, driven by the Nunchuk's stick. They are the
 Infernal Engine's, from games where one drove; nothing in Hollywood Arts
 calls them.
 
-### 16. The rhythm game keeps time in silence
+### 16. The rhythm game can be played in silence
 
-The rhythm game's beats come from Wwise (`soundBeatCallback`), and the port
-has no sound yet: AX runs, mixes nothing and plays nothing. The rhythm game
-keeps time anyway: played through in session 5, every press, hold and
-shake landed in its window. Presumably Wwise advances its music by the AX
-frames it is asked to render, heard or not; that is to be checked when the
-mixer comes, since it is also what keeps the game in sync.
+For a session the port had no sound: AX ran and mixed nothing. The rhythm
+game was played through anyway, every press, hold and shake landing in its
+window. Its beats come from Wwise (`soundBeatCallback`), which counts the AX
+frames it renders whether or not anyone hears them, and the screen carries
+the rhythm too: the icons slide along a track to the press point and pulse
+on the beat.
+
+### 17. Promo codes, in plain text
+
+The options menu has a "Promo Code" screen. `PromoCodeScreen::vInitialize`
+copies nine five-digit codes out of the executable, one set for North
+America and one for everywhere else (`bIsNorthAmericanBuild`), each made of
+the digits 1 to 5 only. Each unlocks something once (a flag, a group of
+forty-two or sixteen items, the "Romeo & Juliet" finale level, or 500 more of a
+saved counter); a code already used says so. For the North American disc
+they are 55521, 41332, 52311, 21154, 31543, 13524, 53142, 42111 and 55242.

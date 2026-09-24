@@ -1,28 +1,25 @@
-# TODO — session 6
+# TODO — session 7
 
-Phase 5 of the plan: audio. The game plays with the mouse, the rhythm game
-included, but in silence: AX runs on the DSP HLE and mixes nothing. The goal
-is **music and voices**, and a rhythm game that stays in sync with what is
-heard.
+Phase 6 of the plan: the PC finish. The game plays with the mouse, with
+sound, at its 30 frames a second; what is left is making it a PC game
+rather than a Wii in a window.
 
-1. **The AX mixer.** The game's Wwise drives AX voices (DSP-ADPCM and PCM,
-   their parameter blocks in main memory); the DSP HLE already answers the
-   micro-code's mails. Mix the voices on the host (sample-rate conversion,
-   volume envelopes, the main and aux buses), and play the result through
-   SDL3's audio at 32 kHz. Dolphin's AX HLE is the reference.
-2. **The audio clock.** The rhythm game's beats come from Wwise
-   (`soundBeatCallback`), which counts the AX frames it renders. Once sound
-   is heard, AI's DMA pace and the host's audio device must agree, or the
-   beats drift from the music (`05-open-questions.md` 10).
-3. **Streams**: the Bink movies' audio and any streamed music (Wwise's
-   stream manager on DVD).
-4. **The Remote's speaker**: Wwise's speaker manager sends it a stream;
-   `WPADCanSendStreamData` says no. Decide whether those sounds go to the
-   main mix instead.
-5. **Side work, as time allows**: SYSCONF (language, aspect ratio, sound
-   mode, `05-open-questions.md` 14); how the second player joins the
-   rhythm game (`05-open-questions.md` 4); a frame from Dolphin next to the
-   classroom's; the renderer's cost at `--scale 2`.
-
-Nothing from the renderer's list (fog, Z textures, TMEM preloads) showed up
-in twelve minutes of E1A1: it stays reported on first use.
+1. **Widescreen, properly.** The game letterboxes 16:9 inside a 4:3 picture
+   (360 of 480 lines). The engine has `vEnableWideScreen`, and the SDK reads
+   the aspect ratio from SYSCONF (`SCGetAspectRatio`): a real SYSCONF in the
+   NAND with 16:9 (`05-open-questions.md` 14) should give full-height
+   anamorphic frames, to present at 16:9. Language and sound mode come from
+   the same file.
+2. **The window**: fullscreen (a key, and a flag), aspect-correct scaling
+   on any window shape, the mouse mapping following.
+3. **Internal resolution**: `--scale 2` and above, checked for quality (EFB
+   copies at scale, the Bink frames, the text) and cost; perhaps a default.
+4. **Rhythm latency compensation** (`05-open-questions.md` 10): take the
+   output's latency off the press time, so the best grades land on the beat.
+5. **Keys**: a small configuration file for the key map; a second player for
+   the rhythm game (`05-open-questions.md` 4).
+6. **Playing on**: past the first episode, watching the log for what the
+   renderer reports on first use (fog, Z textures, TMEM preloads) and for
+   anything the audio skips.
+7. **Side work**: a frame from Dolphin next to the port's, the first use of
+   Dolphin as the oracle.

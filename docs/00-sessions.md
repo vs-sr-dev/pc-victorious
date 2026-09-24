@@ -248,3 +248,43 @@ Results:
   makes it playable by eye as well. 204 shader programs, 3.6 million draws,
   and not one report of a GX feature the renderer lacks.
 * The native self-test still passes, 15 of 15.
+
+## Session 6 — audio, and the frame rate held
+
+Goal: phase 5 of the plan. Music and voices, and the rhythm game in sync
+with what is heard.
+
+Results:
+
+* **The AX micro-code in C++** (`ax.cpp`, `13-audio.md`). Wwise plays on the
+  DSP's hardware voices, so the mixer has to be the DSP's: the command list
+  of this SDK read from `__AXNextFrame`, the 0x140-byte parameter block
+  checked field by field against the SDK's own `AXSetVoice*` stores, and
+  Dolphin's AXWii HLE as the reference for what each command does: DSP-ADPCM
+  and PCM decoding, the polyphase resampler with the DSP ROM's table, the
+  volume envelope, low-pass and biquad, the ramped mix into main and three
+  aux buses, the aux effects' round trip through the CPU, the compressor,
+  the Remote speakers' 6 kHz mix.
+* **Heard at the first run**: the Bink logos' music, the menus, the
+  background music, the cast's voices, the rhythm games. A rare buzz on room
+  changes was the AI replaying a 3 ms frame the busy guest had not yet
+  refilled: such a block is now skipped.
+* **Latency.** The SDL3 stream holds 20 ms of sound, its speed nudged by at
+  most 2% to keep that level against the drift between the host's clock and
+  the sound card's (measured: 1.0000 ± 0.0001). The rhythm game is playable
+  by ear; its best grade wants a press a hair early, since what is heard and
+  seen trails the game's audio clock by the output's latency.
+* **The frame rate.** The first episode's nightclub ran at 16-19 fps. New
+  measuring tools (`WIIKIT_PERF`, and a sampling profiler that unwinds out of
+  DLLs, `WIIKIT_PROFILE` with `tools/profile_resolve.py`) found neither the
+  GPU nor the recompiled game at fault: `std::ldexp`, called by every
+  quantised paired-single load and store for its scale (the engine skins on
+  the CPU), and page faults on the GX record's fresh buffers. The scale is
+  now built from its exponent bits and the buffers are recycled: 30 fps
+  held, the game's thread idle 60% of the time in that scene. `-O2` was
+  tried on the way and changed nothing.
+* **The write-gather pipe** delivers 32-byte bursts, as the hardware does,
+  instead of every store running the FIFO parser under a lock.
+* **Played by hand** through the first episode's second act and its
+  rhythm game, with sound, for over half an hour in several runs.
+* The native self-test still passes, 15 of 15.
