@@ -7,9 +7,11 @@ re-released. The goal is the game running natively on PC, with the Wii
 Remote pointer replaced by the mouse.
 
 This repository documents the disc, its formats and its code, and grows the
-tooling for the port. Alongside it grows **wiikit**, a game-agnostic toolkit
-for Wii reverse engineering: everything the port needs that is not
-specific to Victorious.
+tooling for the port. Alongside it grew **[wiikit](https://github.com/vs-sr-dev/wiikit)**,
+a game-agnostic toolkit for Wii reverse engineering: everything the port
+needs that is not specific to Victorious. wiikit now has its own
+repository, taken here as a submodule: clone with `--recursive`, or run
+`git submodule update --init`.
 
 ## BYOA — Bring Your Own Assets
 
@@ -20,8 +22,8 @@ the North American release, S2VEG9.
 ## Layout
 
     docs/            disc, format and code analysis, and the plan
-    tools/           Victorious-specific tools, the port's own layer over the runtime, the native self-test, the profile resolver
-    wiikit/          game-agnostic Wii toolkit
+    tools/           Victorious-specific tools, the port's own layer over the runtime, the native self-test
+    wiikit/          game-agnostic Wii toolkit (submodule: github.com/vs-sr-dev/wiikit)
     wiikit/recomp/   the static recompiler (Gekko -> C++)
     wiikit/runtime/  the C++ side: CPU model, guest memory, OS, hardware, IOS, the renderer, the audio; wiiboot
 
@@ -87,7 +89,7 @@ build/recomp-build/wiiboot build/extract --no-audio                # no sound
 
 # where the time goes: per-frame figures, and a sampling profiler (Windows)
 WIIKIT_PERF=1 WIIKIT_PROFILE=1 build/recomp-build/wiiboot build/extract 2> run.err
-python tools/profile_resolve.py build/recomp-build/wiiboot.exe run.err build/symbols.tsv
+python -m wiikit.profile build/recomp-build/wiiboot.exe run.err build/symbols.tsv
 
 # standard Wii formats
 python -m wiikit.u8 build/extract/files/HomeButton2/homeBtn.arc
@@ -174,7 +176,7 @@ See [docs/00-sessions.md](docs/00-sessions.md) for the log,
     07-next-session.md        the plan for the next session
     08-input-and-rhythm.md    the input path, the controls, the mouse as the Remote, the rhythm game
     09-recompiler.md          the recompiler, the CPU model, the native tests
-    10-wiikit.md              the game-agnostic toolkit
+    10-wiikit.md              the game-agnostic toolkit: now its own repository
     11-runtime.md             the runtime: OS, interrupts, IOS, DSP, GX; the boot step by step
     12-renderer.md            the renderer: GX on OpenGL, TEV to GLSL, EFB copies, VI
     13-audio.md               the audio: the AX mixer in C++, the way to the speakers, latency

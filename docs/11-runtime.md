@@ -225,7 +225,7 @@ layer is `tools/victorious.cpp`, with `tools/victorious-hooks.txt`.
 | `WIIKIT_PERF=1` | every second: fps, frame time, and on the game's thread the time spent decoding vertices and textures and waiting for the renderer; the renderer's time |
 | `WIIKIT_PROFILE=1` | (Windows) a sampling profiler of the thread holding the baton, ~600 samples a second; every ten seconds the hottest addresses, and for samples inside a DLL the executable's function that called in (unwound on a copy of the stack) |
 
-`python tools/profile_resolve.py build/recomp-build/wiiboot.exe run.err
+`python -m wiikit.profile build/recomp-build/wiiboot.exe run.err
 build/symbols.tsv` names the addresses with `nm`: runtime functions by their
 C++ names, recompiled ones by their guest names.
 
