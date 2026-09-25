@@ -6,8 +6,6 @@ Resolved questions move to the bottom with the session that settled them.
 
 3. **`wii_nunchuk_*.tga`** (7 languages): a controller-help screen, or is the
    Nunchuk used somewhere?
-4. **Two-player rhythm mode** (`is2PlayerRhythmGameActive`): how does the
-   second player join, and on which Remote?
 
 ## Data
 
@@ -26,7 +24,8 @@ Resolved questions move to the bottom with the session that settled them.
 
 8. **Debug features in the retail build**: `DebugLevelSelectScreen` (with
    its `.swf`), `CDevMenuNode`, `CEditorTools`, cheat processing. Reachable?
-10. **Rhythm latency compensation.** The rhythm game judges presses on its
+10. **Rhythm latency compensation.** (Not felt in play so far: the beat
+    windows seem wide enough for the output's 30-40 ms.) The rhythm game judges presses on its
     audio clock; the player hears and sees 20 ms of audio queue plus the
     device's buffer, and up to two frames of renderer queue, later. Taking
     that off the press time where `CDebugRhythmGameUI::debugRender` makes it
@@ -38,12 +37,6 @@ Resolved questions move to the bottom with the session that settled them.
     Gekko rounds frC to 25 bits first. `fres`/`frsqrte` are exact instead of
     table estimates. Where does the game notice? Differential runs against
     Dolphin (same inputs, compare memory) will tell.
-## Runtime
-
-14. **SYSCONF**: the NAND has none, and `SCCheckStatus` accepts that and
-    falls back to an empty configuration. Language, aspect ratio (the
-    engine has `vEnableWideScreen`) and sound mode will want a real one.
-
 ## Renderer
 
 15. **Nine EFB copies to textures every frame** in the classroom: which
@@ -54,6 +47,15 @@ Resolved questions move to the bottom with the session that settled them.
     does the game use them? The renderer reports each on first use.
 
 ## Resolved
+
+* *Session 7* — **Two-player rhythm mode**: the players take turns on the
+  same Remote; the active player only chooses whose score is kept
+  (`08-input-and-rhythm.md`).
+
+* *Session 7* — **SYSCONF**: the port writes one in the NAND on the first
+  run (16:9, English, stereo). With the 16:9 setting the game draws full
+  448-line anamorphic frames instead of letterboxing into 360
+  (`11-runtime.md`).
 
 * *Session 6* — **The rhythm game's clock**: Wwise's beat callbacks follow
   the AX frames it renders, and the AI paces those on the host clock; with

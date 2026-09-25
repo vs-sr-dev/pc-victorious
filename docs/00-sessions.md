@@ -288,3 +288,45 @@ Results:
 * **Played by hand** through the first episode's second act and its
   rhythm game, with sound, for over half an hour in several runs.
 * The native self-test still passes, 15 of 15.
+
+## Session 7 — the PC finish
+
+Goal: phase 6 of the plan. The game plays with the mouse, with sound, at 30
+frames a second; make it a PC game rather than a Wii in a window.
+
+Results:
+
+* **SYSCONF** (`sysconf.cpp`, `11-runtime.md`). The NAND had none, and the
+  SDK's fallback is a 4:3 console, on which Victorious letterboxes its 16:9
+  picture into 360 lines. The port now writes one on the first run (16:9,
+  English, stereo, no Remotes paired), in the layout Dolphin writes;
+  `--aspect` and `--language` change it and the change stays. At boot
+  `enableWidescreen` sees `SCGetAspectRatio() == 1` and the engine goes
+  widescreen: VI's VTR goes from 180 to 224 lines a field, and every frame
+  is drawn anamorphic at 640 × 448, presented at 16:9. Checked first without
+  a window, from the VI registers, for both settings.
+* **The window.** The TV's shape comes from SYSCONF; the picture is as large
+  as the window allows and centred, and the presenter and the mouse share
+  one rectangle, so the cursor stays under the mouse at any size (checked by
+  hand at 1920 × 1080). `--window WxH` sets the first size (1280 × 720 by
+  default). F11 or Alt+Enter, or `--fullscreen`, switch to SDL's borderless
+  fullscreen at the desktop's mode: on an ultrawide the picture keeps 16:9
+  with bars at the sides, and nothing else on the desktop moves.
+* **The internal resolution.** The EFB, and every EFB copy with it, already
+  scaled with `--scale`; the texture coordinates, fixed point in 1/128 of a
+  texel and sampled normalised, read a larger copy where the game expects.
+  At 1080 lines the models' stair-steps were the one thing that looked
+  wrong: the scale now defaults to enough EFB lines for the screen's height
+  (× 3 at 1080 or 1440 lines, × 2 at 720). At × 3 (1920 × 1584) the game
+  looks clean and holds 30 fps; no reports from the renderer, the EFB
+  copies (six a frame there) right.
+* **Keys from a file** (`build/keys.txt`, `--keys`), written with the
+  defaults when missing: each Remote button, then SDL key names and mouse
+  buttons, the side buttons included. Esc, F11 and Alt+Enter are fixed.
+* **Two players** in the rhythm game take turns on one Remote: input is
+  always read from controller 0, and the active player only decides whose
+  score is kept. Nothing to add on a PC.
+* **Rhythm latency** was not felt in play: the beat windows absorb the
+  output's 30-40 ms. The compensation stays an open question (10).
+* **Played by hand** in several runs, the longest nine minutes, at 30 fps
+  with other programs open alongside; no GX feature reported missing.

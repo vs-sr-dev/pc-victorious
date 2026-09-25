@@ -103,10 +103,26 @@ The cut is `KPADRead` (`wpad.cpp`), with the Remote on channel 0:
 | shake | Space, middle button |
 | Home | none: Esc opens the port's own pause box (Resume / Quit) |
 
+Since session 7 the buttons come from a key file, `build/keys.txt` (next to
+the extracted disc; `--keys FILE` for another), written with the defaults
+above when there is none. Each line is a Remote button, then the keys (by
+SDL's names) and mouse buttons (`Mouse Left`, `Right`, `Middle`, `X1`,
+`X2`) that press it:
+
+```
+A     = Return, Keypad Enter, Mouse Left
+Shake = Space, Mouse Middle
+```
+
+A name SDL does not know is reported and skipped. Esc, F11 and Alt+Enter
+(fullscreen) are fixed; with Alt held, Enter is not A.
+
 * **The pointer** is −1..1 across the picture as it is shown: the width
-  of the 4:3 screen, and only the lines VI scans out (360 of 480, since the
-  game letterboxes 16:9). Mapped over the whole 4:3 screen, the cursor moved
-  a quarter less than the mouse vertically. The game turns `pos` into pixels
+  of the screen (4:3 or 16:9, as SYSCONF says), and only the lines VI scans
+  out (448 of 480 at 16:9; 360 on a 4:3 console, where the game letterboxes
+  16:9). Mapped over the whole 4:3 screen, the cursor had moved a quarter
+  less than the mouse vertically. The presenter and the mouse share one
+  rectangle, whatever the window's shape or fullscreen. The game turns `pos` into pixels
   with `SController::getPointerXY`, linearly over `PIXX` × `PIXY`. Over the
   picture the Windows pointer is hidden: the game draws its own.
 * **The cursor's smoothing.** `CAdventureCursor::vUpdateInput` moves the
@@ -167,5 +183,8 @@ The cut is `KPADRead` (`wpad.cpp`), with the Remote on channel 0:
 * **Timing** is driven by audio: `CSongMoveBlockActor::soundBeatCallback`,
   from Wwise. A port with loose audio timing would put the rhythm game out
   of sync.
-* **Two players**: `is2PlayerRhythmGameActive`, `getActiveRhythmGamePlayer`
-  need a second "controller" on PC (gamepad or a second key set).
+* **Two players** take turns on one Remote. `updateInput` reads controller
+  0 whoever plays (`isPressed`, `bGetShake(0)`); the active player
+  (`GameGlobals+0x24D18`, set to the first by `RhythmSelectScreen` and moved
+  on by `AfterActionReviewScreen` after each song) only decides whose score
+  `debugRender` keeps. On a PC the mouse is passed, as the Remote was.

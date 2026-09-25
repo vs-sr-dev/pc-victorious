@@ -6,12 +6,15 @@ Strap screen, the Bink logos, the Scaleform title and menus, and the 3D
 adventure all render, at the game's own 30 frames a second.
 
 ```
-wiiboot build/extract [--scale N] [--dump DIR] [--dump-every N] [--quit-after SECONDS] [--no-video]
+wiiboot build/extract [--scale N] [--window WxH] [--fullscreen] [--dump DIR] [--dump-every N]
+                      [--quit-after SECONDS] [--no-video]
 ```
 
 | Option | |
 |---|---|
-| `--scale N` | internal resolution: the EFB at N × 640 × 528 |
+| `--scale N` | internal resolution: the EFB at N × 640 × 528. By default N is chosen from the window's first size, enough EFB lines for the screen's height: 3 for 1080 or 1440 lines, 2 for 720 |
+| `--window WxH` | the window's size; by default 720 lines at the screen's shape (1280 × 720 for 16:9) |
+| `--fullscreen` | start fullscreen; F11 or Alt+Enter switch at any time. SDL's borderless fullscreen at the desktop's mode: nothing else on the desktop changes, and the picture keeps its shape with bars at the sides |
 | `--dump DIR` | a PNG of the window every `--dump-every` retraces (60 by default) |
 | `--quit-after S` | leave after S seconds, with statistics |
 | `--no-video` | no window: the stream is only parsed, as in session 3 |
@@ -99,11 +102,25 @@ a pixel format without alpha reads destination alpha as 1.
 
 On each 59.94 Hz retrace the renderer presents the XFB copy whose address
 VI's top-field register (TFBL) holds. VI also decides the height: the active
-lines in VTR, centred in a 480-line 4:3 screen. Victorious shows its strap
-screens at 448 lines and letterboxes everything after them to 16:9: the
-Bink logos, the title and the game are 640 × 360 XFBs that VI scans out as
-360 of the 480 lines. Stretching them to the full screen had made everyone
-a third taller.
+lines in VTR, centred in a 480-line screen. The screen is the TV the console
+believes it has, 4:3 or 16:9 as SYSCONF says (`11-runtime.md`), as large as
+the window allows and centred; the mouse maps over the same rectangle.
+
+On a 4:3 console Victorious shows its strap screens at 448 lines and
+letterboxes everything after them to 16:9: the Bink logos, the title and
+the game are 640 × 360 XFBs that VI scans out as 360 of the 480 lines.
+Stretching them to the full screen had made everyone a third taller. On a
+16:9 console, the port's default since session 7, the game draws every
+frame at 640 × 448, anamorphic, and VI scans out 448 lines: a quarter more
+lines of picture, presented at 16:9. The 32 lines left over are two thin
+bars a TV's overscan would hide.
+
+The internal resolution multiplies the EFB, and with it every EFB copy: to
+the XFB, and to textures (the classroom makes six to nine a frame). Texture
+coordinates are fixed point in 1/128 of a texel and sampled normalised, so
+a copy three times larger is read where the game expects. At × 3 in a
+1080-line window the models lose their stair-steps and the game holds its
+30 frames a second.
 
 ## Two things only the pictures showed
 

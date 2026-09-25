@@ -76,7 +76,11 @@ build/recomp-build/selftest build/extract/sys/main.dol build/symbols.tsv
 # a window opens; the mouse is the Wii Remote's pointer: left button or
 # Enter = A, right button or Backspace = B, W A S D or the arrows = d-pad,
 # Tab = +, Q = -, 1 and 2, Space or the middle button = shake; Esc pauses
+# 16:9, a 1280 x 720 window, the internal resolution from the window's size;
+# F11 or Alt+Enter for fullscreen (borderless); the keys are in build/keys.txt
 build/recomp-build/wiiboot build/extract --symbols build/symbols.tsv
+build/recomp-build/wiiboot build/extract --window 1920x1080       # x3 inside
+build/recomp-build/wiiboot build/extract --aspect 4:3 --language fr   # the console's settings, kept
 build/recomp-build/wiiboot build/extract --scale 2 --dump build/shots --dump-every 300
 build/recomp-build/wiiboot build/extract --no-video --watch 10     # no window
 build/recomp-build/wiiboot build/extract --no-audio                # no sound
@@ -92,6 +96,15 @@ python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
 
 ## Status
 
+Session 7: **the game is a PC game.** The port writes the console's
+settings (SYSCONF) in the NAND, and at 16:9 the game stops letterboxing:
+every frame is drawn anamorphic at full height, 448 lines instead of 360.
+The window takes any size and shape with the picture and the mouse in
+step, fullscreen is borderless (F11), the internal resolution follows the
+window (three times the Wii's at 1080 lines, still 30 fps), and the keys
+come from a file. The two-player rhythm game turned out to be turns on one
+Remote. Next: playing on through the episodes, and Dolphin as the oracle.
+
 Session 6: **the game has sound.** Wwise plays on the DSP's hardware voices,
 so the DSP's mixer is now C++: the AX command list, DSP-ADPCM, the polyphase
 resampler, envelopes, filters, the aux effects' round trip through the CPU.
@@ -100,7 +113,7 @@ heard, through SDL3 with 20 ms of latency, and the rhythm game is played by
 ear. The heaviest scene so far, a nightclub, went from 17 to a steady
 30 fps once a sampling profiler showed where the time went: a libm call in
 every quantised paired-single load, and fresh memory for the GX record.
-Next is the PC finish: widescreen, fullscreen, resolution.
+Next was the PC finish.
 
 Session 5: **the game is played with the mouse.** The pointer follows the
 mouse one to one (the game's own cursor smoothing is lifted by the port's

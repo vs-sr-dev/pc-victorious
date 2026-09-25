@@ -10,7 +10,9 @@ played, Wwise running on a silent AX, and frames of GX commands flowing.
 ```
 wiiboot build/extract [--nand DIR] [--fonts DIR] [--symbols build/symbols.tsv]
                       [--mmio-log] [--watch SECONDS]
-                      [--no-video] [--scale N] [--dump DIR] [--dump-every N] [--quit-after SECONDS]
+                      [--aspect 16:9|4:3] [--language en|fr|es|de|it|nl|ja]
+                      [--no-video] [--no-audio] [--scale N] [--window WxH] [--fullscreen]
+                      [--dump DIR] [--dump-every N] [--quit-after SECONDS]
 ```
 
 The video options belong to the renderer, `12-renderer.md`. The game runs
@@ -19,10 +21,30 @@ on its own threads; the process's main thread runs the window.
 | Option | |
 |---|---|
 | `--nand` | the NAND as a host folder (saves, SYSCONF); `build/nand` by default |
+| `--aspect` | the console's TV shape, in SYSCONF: 16:9 (the default) or 4:3 |
+| `--language` | the console's language, in SYSCONF (English by default) |
 | `--fonts` | the boot ROM's fonts, `font_western.bin` and `font_japanese.bin`; `build/fonts` by default. Dolphin's `Sys/GC` has free ones (Droid Sans, Apache 2.0) |
 | `--symbols` | names guest addresses in logs and crash reports |
 | `--mmio-log` | the first read and first write of every hardware register, with the guest function that made it |
 | `--watch N` | every N seconds: the running guest thread's call chain, where every other thread waits, the decrementer, the GX statistics |
+
+## SYSCONF: the console's settings
+
+The SDK's SC library reads `/shared2/sys/SYSCONF` from the NAND at boot, and
+the game asks it for the aspect ratio, the language, the sound mode. With no
+file the SDK falls back to an empty configuration: 4:3, where Victorious
+letterboxes its 16:9 picture into 360 lines. `sysconf.cpp` writes one on
+the first run, set as a PC wants it: 16:9, English, stereo, no Remotes
+paired. `--aspect` and `--language` change it as the Wii's settings menu
+would, and the change stays for the runs after.
+
+The file is 0x4000 bytes: `SCv0`, a big-endian count of items, one offset
+per item and one for their end, the items, and `SCed` in the last four
+bytes. An item is a byte (type << 5 | name length − 1), the name, and its
+value; arrays carry their length − 1 first. The layout is the one Dolphin
+writes. At boot `enableWidescreen` finds `SCGetAspectRatio() == 1` and turns
+the engine's widescreen on: VI's VTR goes from 180 to 224 lines a field, and
+every frame is drawn anamorphic at full height (`12-renderer.md`).
 
 ## Where the cuts are
 
