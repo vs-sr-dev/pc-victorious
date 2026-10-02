@@ -1,0 +1,11 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Victorious: Taking the Lead",
+  "system": "Wii",
+  "type": "recomp",
+  "toolchain": "wiikit",
+  "status": "in-progress",
+  "targets": [
+    "Windows"
+  ]
+}
