@@ -92,7 +92,26 @@ Text, `key = value`, starting with `version = 19` and the set file
 
 ## Wwise (`.bnk`, `.wem`)
 
-Standard Wwise: `BKHD` banks and RIFX `.wem` media with format tag 2, which
-Wwise uses for DSP-ADPCM on big-endian platforms. The SDK's DSP-ADPCM decoder
-is in `wiikit.dsp`. How the coefficients sit in the `fmt ` chunk is next
-session's work.
+`tools/wwise.py`. Standard Wwise, bank version 65, big-endian throughout:
+`BKHD` banks and RIFX `.wem` media with format tag 2, which Wwise uses for
+DSP-ADPCM on big-endian platforms.
+
+**Banks**: chunks `BKHD`, `DIDX`/`DATA` (media kept in the bank: id, offset,
+size), `HIRC` (the objects: type u8, size u32, id u32), `STID`. 39 banks in
+`WIISOUND` (one per act, per rhythm game, `global`, `init`, `jukebox`), and
+the voice banks with their streamed media in `WIIENSND/.../english(us)`. An
+event (type 4) lists actions (type 3); a Play action (0x0403) names a Sound
+(type 2: plugin, stream type, source id; type 0 keeps the media in the bank,
+1 streams it from `<source id>.wem` beside the bank) or a container whose
+children are Sounds. Wwise names events by the FNV-1 hash of the lower-case
+name; the banks keep only the hash, but the levels post events by name
+(`soundFileName = Play_...` in `.lvl`, strings in `.dante`), which names
+3 469 of the 3 908 events.
+
+**Media**: 3 408 mono, 111 stereo, all 32 kHz, each `fmt `, `smpl`, `JUNK`,
+`data`. After the usual 0x12 bytes of `fmt ` come 0x0010, the channel mask
+(u32) and the sample count (u32); then, from 0x1C, one 0x2E-byte block per
+channel laid out as the standard DSP header from its own 0x1C: 16
+coefficients, gain, initial predictor/scale and history, the loop's
+(`fmt ` is 0x4C bytes mono, 0x7A stereo). The data interleaves the channels
+frame by frame, 8 bytes (14 samples) each; the decoder is `wiikit.dsp`'s.

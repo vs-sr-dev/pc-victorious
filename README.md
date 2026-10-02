@@ -57,12 +57,14 @@ python -m wiikit.ppc $ELF --xref 0x8079ADA0
 python -m wiikit.ppc $ELF --mix
 python -m wiikit.cw 'process__19CSongMoveBlockActorFf'
 
-# the game's archives, UI movies and rhythm charts
+# the game's archives, UI movies, rhythm charts and sounds
 python tools/pod.py list build/extract/files/WIICOMMON.POD
 python tools/pod.py extract build/extract/files/WIICOMMON.POD build/pod/WIICOMMON
 python tools/gfx.py build/pod/WIIART/flash --census
 python tools/gfx.py build/pod/WIIART/flash/rhythmgamecontrol.gfx --strings
 python tools/songs.py build/pod/WIICOMMON/data/songs
+python tools/wwise.py events build/pod
+python tools/wwise.py wav build/pod build/sounds Play_JadeStingerCine2
 
 # recompile the executable to C++, build it, run the game's code natively
 python -m wiikit.recomp $ELF --out build/recomp

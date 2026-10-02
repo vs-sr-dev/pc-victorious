@@ -12,9 +12,6 @@ Resolved questions move to the bottom with the session that settled them.
 5. **Dante bytecode**: the text form lists strings, data, natives and
    reference lists; the code itself is not decoded. Not needed for a
    recompiled port, useful for understanding scripts.
-6. **Wwise media**: where the DSP coefficients sit in the RIFX `fmt ` chunk
-   (format tag 2, 0x4C bytes). No longer needed to play them (the AX mixer
-   reads them from the voices' parameter blocks); useful for extracting.
 7. Formats named but not described: `.tex`, `.smb`, `.bfm`, `.skb`, `.ani`,
    `.mtb`, `.bst`, `.cinemat`, `.tfb`, `.phys2b`, `.cib`, `.atb`, `.lvl`.
    They are not needed for a recompiled port (the game reads them itself)
@@ -48,6 +45,10 @@ Resolved questions move to the bottom with the session that settled them.
 
 ## Resolved
 
+* *Session 8* — **Wwise media**: the DSP coefficients sit in the RIFX
+  `fmt ` chunk from 0x1C, 0x2E bytes a channel, as in the standard DSP
+  header from its own 0x1C; the channels interleave frame by frame
+  (`02-container-formats.md`, `tools/wwise.py`).
 * *Session 7* — **Two-player rhythm mode**: the players take turns on the
   same Remote; the active player only chooses whose score is kept
   (`08-input-and-rhythm.md`).
