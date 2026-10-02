@@ -100,6 +100,16 @@ python -m wiikit.tpl build/extract/files/HomeButton2/homeBtnIcon.tpl build/icon
 
 ## Status
 
+Session 8: **the game is played through.** All four episodes, the Romeo
+and Juliet finale and the credits ran on the port, played by hand with an
+Xbox pad, the mouse and the keyboard, the longest sitting 2 h 21 min at 30
+fps, saves kept across restarts. The renderer met nothing it lacks on the
+way: the game uses no fog, no Z textures and no TMEM preloads. What is
+left is polish: rare hitches when a dialogue loads, likely the disc reads
+waiting on the host's disk, and a release a player can run. The Wwise
+banks are read too (`tools/wwise.py`), and the disc's stories grew
+(`docs/04-curiosities.md`).
+
 Session 7: **the game is a PC game.** The port writes the console's
 settings (SYSCONF) in the NAND, and at 16:9 the game stops letterboxing:
 every frame is drawn anamorphic at full height, 448 lines instead of 360.
@@ -107,7 +117,7 @@ The window takes any size and shape with the picture and the mouse in
 step, fullscreen is borderless (F11), the internal resolution follows the
 window (three times the Wii's at 1080 lines, still 30 fps), and the keys
 come from a file. The two-player rhythm game turned out to be turns on one
-Remote. Next: playing on through the episodes, and Dolphin as the oracle.
+Remote. Next was playing on through the episodes.
 
 Session 6: **the game has sound.** Wwise plays on the DSP's hardware voices,
 so the DSP's mixer is now C++: the AX command list, DSP-ADPCM, the polyphase

@@ -158,7 +158,8 @@ first cinematic's reuses the second's closing one.
 
 The game's puzzles are solved the sitcom way, and Hollywood Arts is in Los
 Angeles. Read with the California codes at hand (for fun, not as legal
-advice), from the English lines in `WIILANGUAGE/world/en`:
+advice), from the English lines in `WIILANGUAGE/world/en` (act 3.2 is
+episode 3, act 2):
 
 * **Jade cuts up Tori's script** (episode 1, act 5): "I sort of cut and
   scattered the pages", "Cut them up, and threw them away"
@@ -200,6 +201,84 @@ advice), from the English lines in `WIILANGUAGE/world/en`:
   fails authentication when the school already knows who edits them; the
   act's puzzle chain, recorder, words, bribe and splice, ends in one line.
 
+Episode 3 raises the money for the school play, and the record grows:
+
+* **The bake sale's ingredients** (3.2). The frosting is earned from
+  Festus and the coconut is Sikowitz's gift, but the cherries come from the
+  drinks at Karaoke-Dokie, "I'm sure they're ok with me borrowing a few
+  cherries", and the vanilla extract from a fancy restaurant: "I have a
+  vanilla emergency... I'll just borrow this" (`E3A2C16L01`, `L02`).
+  Borrowing does not cover what goes into the dough: taking property
+  without consent, to keep, is petty theft under $950 (Penal Code §§ 484,
+  488). The game knows. Examined, the cherries make Tori ask "Am I a
+  horrible person? Did I just steal these?" (`Examine_Cherries_01`). Nobody
+  answers.
+* **Trina's raffle** (3.3), at a party at the Asphalt Café, sells tickets
+  for the play. California allows raffles only to private non-profits
+  qualified in the state for at least a year, registered with the Attorney
+  General every year, and giving at least 90 % of the takings to charitable
+  purposes (§ 320.5). Two sisters at a party are none of these. Without
+  that exception, a prize, chance and a price make a lottery, and drawing
+  one is a misdemeanour (§§ 319, 320). Then comes the draw. "...AND THE
+  WINNER OF THE RAFFLE IS... OTIS!" "...what do I win?" "errrr... a
+  prize! [...] I forgot. Just give him something" (`E3A3C16L01`–`L08`).
+  The player chooses from a saw, a cup o' cheese, a hot dog, mystery meat,
+  or a fizzy drink at a party where drinks are free (`E3A3C17`). § 320.5
+  defines a raffle as the distribution of prizes by chance among people
+  who have paid. Here the prize was chosen after the draw, by whoever
+  carried it over.
+* **Otis's pay** (3.4): "Do you realize I'm paid in bags of old potato
+  chips?", and "Principal Dickers sometimes doesn't pay me. He says it
+  builds 'character'" (`E3A4C18L02`, `E3A4C25L08`). Wages are paid in
+  money. Labor Code § 212 forbids paying them in anything redeemable
+  "otherwise than in money", and § 220, which spares public employers
+  several of the wage rules, does not spare them this one. Old chips are
+  not even redeemable.
+* **Dickers's detentions** (3.5). Before he will hear Tori out, the vice
+  principal hands her three slips, "already signed", that make "whoever I
+  give it to [...] serve detention tonight": "I don't care who gets them,
+  just get'em out there", then "better yet, give them to your friends,
+  Vega" (`Examine_Detention_Slip`, `E3A5C08L11`, `E3A5C09L07`). Detention
+  is the staff's answer to a pupil's own conduct, and it may last at most
+  one hour after the close of the school day (California Code of
+  Regulations, title 5, § 353). No rule foresees blank punishments signed
+  in advance and handed out by a pupil as the price of a meeting. Told
+  that her outfit is too cute, Cat agrees to serve. Trina refuses,
+  with a threat to tell their mother "about the time you snuck out of the
+  house" (`E3A5C22L04`, `E3A5C24L03`): extortion again, this time by
+  threatening to expose a secret (§ 519).
+
 The villain's record is the lightest: a few cents of paper and some gifts.
-The heroine's holds coercion, and a diary exposed as widely as the player
-likes; the worst is Sinjin's.
+The heroine's holds coercion, a diary exposed as widely as the player
+likes, two petty thefts and three detentions served by the innocent. The
+worst records belong to Sinjin and to the school's vice principal.
+
+### 20. Jade will not dance
+
+Every rhythm game has its character's own lines (`Play_Rhythm<Name>_*`,
+spoken in English and subtitled in the other languages' `rhythm_*.txt`).
+They cheer the player on, and the character dances. Jade stands still and
+talks about the game itself, in ten asides of her own
+(`Play_RhythmJade_Jade_01` to `_10`, also in her hard version). Heard in
+play: "Ooh, look at the sparkly things!" (the sparks a good press throws)
+and "Let go of the button!". The subtitles give the rest: is that good,
+is that the best you can do, a timing game, huh, this noise gives her a
+headache, does she have to stand here, and don't expect her to dance.
+Her intro asks whether they are really playing a game. Her outro grants
+that the score is not bad, and says not to expect her to do it again. No
+other character's lines mention the game.
+
+### 21. The credits roll to "Take a Hint"
+
+After the finale, three rhythm games in a row that stage the school's
+Romeo and Juliet (`balcony`, `crypt`, `masquerade`, remixes of the game's
+songs with period instruments), the credits play to "Take a Hint", sung
+in the series by Victoria Justice and Elizabeth Gillies (Tori and Jade).
+It is also the last of the five songs on a jukebox in the game
+(`Juke_Box_09` in `ui.txt`). The credits are a movie,
+`RealCredits.bik`, so their text is pixels, and one name is misspelt in
+them: the Italian localisation's Paola Menzaghi is credited as "Paola
+Menazghi". The chart files carry a typo too: the masquerade's is
+`rhythm_maquerade.txt` ("exported by SongExporter.xls" as
+`Rhythm_Maquerade.xml`), while its sound bank and subtitles are spelt
+right.

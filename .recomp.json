@@ -4,7 +4,7 @@
   "system": "Wii",
   "type": "recomp",
   "toolchain": "wiikit",
-  "status": "in-progress",
+  "status": "playable",
   "targets": [
     "Windows"
   ]

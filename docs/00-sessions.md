@@ -330,3 +330,37 @@ Results:
   output's 30-40 ms. The compensation stays an open question (10).
 * **Played by hand** in several runs, the longest nine minutes, at 30 fps
   with other programs open alongside; no GX feature reported missing.
+
+## Session 8 — played through
+
+Goal: play the game on to its end, watching the log for what the renderer
+and the audio report, and read what the disc still holds.
+
+Results:
+
+* **The whole game played** by hand, in several sittings with an Xbox pad,
+  the mouse and the keyboard: episodes 1 and 2 (97 minutes for the second),
+  then episodes 3 and 4, the Romeo and Juliet finale and the credits in one
+  sitting of 2 h 21 min (251 819 frames, 29.8 a second). The saves held
+  across every restart. `.recomp.json` says `playable`.
+* **The renderer reported nothing** on first use through the whole game: no
+  fog, no Z textures, no TMEM preloads (`05-open-questions.md`, resolved);
+  109 shader programs, 98 of them from the cache on disk.
+* **Audio**: 51 to 100 blocks skipped for want of a new AX frame in the
+  long sitting, with rare short hitches when a dialogue opens. The likely
+  cause is the disc read served synchronously from a USB hard disk
+  (`05-open-questions.md` 17).
+* **Wwise read** (`tools/wwise.py`): 3 469 of the 3 908 events named from
+  the levels and scripts, their DSP-ADPCM `.wem` media turned into WAV; the
+  coefficients' place in the RIFX `fmt ` chunk settled
+  (`02-container-formats.md`).
+* **wiikit** moved on with the other ports that use it (the Classic
+  Controller, the Nunchuk, GameCube discs and hardware, RSO modules, EFB
+  copies into RAM, FIFO breakpoints), each update checked here on the same
+  screens; the shader programs are now kept on disk.
+* **Curiosities** 18 to 21 (`04-curiosities.md`): the plot-twist sting is a
+  stock Sound Ideas effect; the puzzles read under California law, now
+  through episode 3 (two petty thefts, a raffle no non-profit runs, a
+  school hand paid in chips, detentions signed in advance); Jade's rhythm
+  game, where she will not dance; the credits to "Take a Hint", with a
+  name misspelt in the movie.

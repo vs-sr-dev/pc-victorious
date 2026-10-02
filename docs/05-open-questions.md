@@ -40,11 +40,24 @@ Resolved questions move to the bottom with the session that settled them.
     are they (shadows, a blurred copy for the UI, Scaleform render
     targets)? They look right; knowing them matters for a higher internal
     resolution and for the optional `APIDLL*` cut.
-16. **Fog, Z textures, TMEM preloads**: the SDK functions are linked; where
-    does the game use them? The renderer reports each on first use.
+
+## Runtime
+
+17. **Stutters on loads**: rare, short hitches when a dialogue opens, and
+    with them some audio blocks skipped for want of a new AX frame (51 to
+    100 in the session that played episodes 3 and 4 through). The likely cause:
+    `/dev/di` reads are served synchronously inside the IPC call, so the
+    whole guest waits on the host's disk, a USB hard disk here, where the
+    console's drive works alongside the CPU and answers with an interrupt.
+    To check with `WIIKIT_AUDIODBG`; the fix would answer reads from a
+    worker thread.
 
 ## Resolved
 
+* *Session 8* — **Fog, Z textures, TMEM preloads**: not used. The whole
+  game, from `e1a1` through the finale and the credits, was played with
+  the renderer reporting each on first use, and none was reported. The
+  fog machines of episode 4 are drawn without GX fog.
 * *Session 8* — **Wwise media**: the DSP coefficients sit in the RIFX
   `fmt ` chunk from 0x1C, 0x2E bytes a channel, as in the standard DSP
   header from its own 0x1C; the channels interleave frame by frame
