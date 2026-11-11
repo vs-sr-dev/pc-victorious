@@ -55,10 +55,22 @@ first at 0x180 (the header, rounded up).
 After the name table come the dependency records, 0x108 bytes each, then
 the audit trail, one 312-byte record per entry of the audit count, to the
 end of the file. The dependency count is 0 in all seven archives, so the
-inside of a dependency record is not visible on this disc. An audit record
-is a user name (char[32]), a u32 timestamp, a u32 (0), the entry's path
-(char[256]), then four u32: 0, 0, the entry's timestamp and its size
-(likely old and new, for an entry added).
+inside of a dependency record is not visible on this disc. An audit record:
+
+| Offset | Type | Field |
+|---|---|---|
+| 0x000 | char[32] | user name |
+| 0x020 | u32 | timestamp of the change |
+| 0x024 | u32 | action: 0 add, 1 remove, 2 change |
+| 0x028 | char[256] | the entry's path |
+| 0x128 | u32 | old timestamp |
+| 0x12C | u32 | old size |
+| 0x130 | u32 | new timestamp |
+| 0x134 | u32 | new size |
+
+The action names and the old/new split are d3lm2's (pull request #2). On
+this disc every action is 0 and the old fields are 0, as an add would
+leave them; remove and change do not occur here.
 
 **Checksums**: all five kinds are CRC-32/MPEG-2 (polynomial 0x04C11DB7, most
 significant bit first, initial value 0xFFFFFFFF, no final xor; check value
@@ -73,6 +85,8 @@ significant bit first, initial value 0xFFFFFFFF, no final xor; check value
 | entry 0x18 | the payload as stored |
 
 Checked: every checksum of the seven archives, `tools/pod.py verify`.
+d3lm2 found the entries' CRC and named the fields at 0x118 and 0x11C
+first, in pull request #2.
 The same routine is in the executable as `CCrcCalc` (initial value 0 there,
 and it hashes strings with their terminating NUL); nothing in the archive
 code calls it.
