@@ -31,6 +31,9 @@ Header, 0x170 bytes:
 | 0x10C | u32 | index checksum |
 | 0x110 | u32 | name table size |
 | 0x114 | u32 | dependency count |
+| 0x118 | u32 | dependency table checksum |
+| 0x11C | u32 | audit trail checksum |
+| 0x120 | char[80] | empty on this disc; the game copies it and never reads it |
 
 At the index offset: one 28-byte entry per file, then the name table.
 
@@ -45,7 +48,52 @@ At the index offset: one 28-byte entry per file, then the name table.
 | 0x18 | u32 | checksum |
 
 Names use `\` as separator. Checked: all 7 485 entries of the seven archives
-extract, and every name is a plausible path.
+extract, and every name is a plausible path. The entries are in name order,
+and so are the payloads; each payload starts on a 32-byte boundary, the
+first at 0x180 (the header, rounded up).
+
+After the name table come the dependency records, 0x108 bytes each, then
+the audit trail, one 312-byte record per entry of the audit count, to the
+end of the file. The dependency count is 0 in all seven archives, so the
+inside of a dependency record is not visible on this disc. An audit record
+is a user name (char[32]), a u32 timestamp, a u32 (0), the entry's path
+(char[256]), then four u32: 0, 0, the entry's timestamp and its size
+(likely old and new, for an entry added).
+
+**Checksums**: all five kinds are CRC-32/MPEG-2 (polynomial 0x04C11DB7, most
+significant bit first, initial value 0xFFFFFFFF, no final xor; check value
+0x0376E6E7 for `123456789`), over:
+
+| Checksum | Covers |
+|---|---|
+| header 0x004 | header bytes 0x008–0x170 |
+| header 0x10C | the entries and the name table |
+| header 0x118 | the dependency table (empty, hence 0xFFFFFFFF) |
+| header 0x11C | the audit trail |
+| entry 0x18 | the payload as stored |
+
+Checked: every checksum of the seven archives, `tools/pod.py verify`.
+The same routine is in the executable as `CCrcCalc` (initial value 0 there,
+and it hashes strings with their terminating NUL); nothing in the archive
+code calls it.
+
+**What the game reads** (`pod.cpp`: `CPodFile::mount`, `CPodFile::find`,
+`CPod::mountDefaultPodFiles`):
+
+* `mount` takes `POD3`, `POD4` and `POD5` (internal versions 300, 400, 500).
+  POD3 and POD4 have a 0x120-byte header (`FixBytes(SPod3Header&)`), POD5
+  the 0x170 one. POD3 entries are 20 bytes: no uncompressed size, no
+  compression.
+* Of an entry it reads the name offset, sizes, data offset and compression,
+  and skips the timestamp and the checksum. No checksum is verified at
+  run time, and the audit trail is not loaded. The dependency table's
+  position and count are kept, but nothing in `pod.cpp` reads it.
+* Archives are ranked by the priority at 0x064 (`enforceMountPriority`).
+* Lookup is a binary search over the entries sorted by name with `stricmp`.
+  A second mode replaces each name by `computeStringHashIgnoreCase` and
+  sorts by that: `h = (h + upper(c)) * 0x12B9B2CD mod 0xFFFFFFFB` over the
+  characters, in 64-bit arithmetic, from 0. Victorious mounts every archive
+  without it.
 
 ## Scaleform GFx movies (`.gfx`)
 
