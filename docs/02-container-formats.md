@@ -43,7 +43,7 @@ At the index offset: one 28-byte entry per file, then the name table.
 | 0x04 | u32 | stored size |
 | 0x08 | u32 | data offset |
 | 0x0C | u32 | uncompressed size |
-| 0x10 | u32 | compression (0 on every file of this disc) |
+| 0x10 | u32 | compression, below (0 on every file of this disc) |
 | 0x14 | u32 | timestamp |
 | 0x18 | u32 | checksum |
 
@@ -108,6 +108,55 @@ code calls it.
   sorts by that: `h = (h + upper(c)) * 0x12B9B2CD mod 0xFFFFFFFB` over the
   characters, in 64-bit arithmetic, from 0. Victorious mounts every archive
   without it.
+
+**Compression.** No entry on this disc is compressed, but the engine can
+read compressed ones. `getFileInfoPod` passes the entry's compression on,
+and `CInStreamFile::open` reads a compressed entry through a
+`CInStreamPipe` built by `getCompressor(ECompressionType, bool)`
+(`codec.cpp`). Its jump table and `getCodec` give the types:
+
+| Type | Codec |
+|---|---|
+| 0 | stored |
+| 1 | LZW (`CLZWDecompress`) |
+| 2 | RLE |
+| 3 | DBC |
+| 4 | Huffman (adaptive) |
+| 5 | Fibonacci |
+| 6, 7 | RLE, with 2 and with 4 as its parameter |
+| 8 | RLE, BWT, move-to-front, RLE, Huffman (decoded in reverse) |
+| 9 | BWT, move-to-front, LZW |
+| 10 | RLE, BWT, move-to-front, RLE, Fibonacci |
+
+Wipeout: The Game, another Infernal Engine game on Wii, uses type 1 in its
+`WIIMODEL.POD` (d3lm2, issue #1). `tools/pod.py` decodes types 0 and 1,
+names the others, and skips them on extraction.
+
+**LZW** (`CLZWDecompress::convertBufferToBuffer`, `CLZWDictionary`; the
+encoder is `CLZWCompress`):
+
+* The dictionary has 0x2000 entries; the first 256 are the bytes. Each
+  entry is a byte and the code of its prefix.
+* Codes start 8 bits wide. They are written most significant bit first,
+  and the bits are packed into bytes from the least significant bit up.
+* Only the bits that can still differ from `next - 1`, the highest code
+  that can occur, are written. Reading from the top bit, as long as every
+  bit so far has matched `next - 1`, a bit where `next - 1` has a 0 is
+  implied 0 and not stored. After the first bit below it, all the
+  remaining bits are written.
+* After each code except the first, the dictionary gains the previous
+  code's word plus the first byte of this one. That is one step later than
+  textbook LZW, so a code is always in the dictionary when it is read.
+* An addition made when `next` is a power of two first widens the codes by
+  one bit. An addition made when the dictionary is full resets it to the
+  256 bytes and 8 bits instead, and the code after that adds nothing.
+* The stream ends when the expected size has been produced.
+
+Checked: `tools/pod.py lzwtest` compresses and decompresses every entry of
+`WIILANGUAGE`, `WIIMODEL` and `WIISET` (550 files, 46 MB). The game's own
+decoder, recompiled, decodes `pod.py`'s output exactly: `selftest` takes
+pairs of files, original and compressed. Still to check: the real type-1
+entries of a game that uses them.
 
 ## Scaleform GFx movies (`.gfx`)
 

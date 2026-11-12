@@ -61,6 +61,7 @@ python -m wiikit.cw 'process__19CSongMoveBlockActorFf'
 python tools/pod.py list build/extract/files/WIICOMMON.POD
 python tools/pod.py extract build/extract/files/WIICOMMON.POD build/pod/WIICOMMON
 python tools/pod.py verify build/extract/files/*.POD
+python tools/pod.py lzwtest build/extract/files/WIILANGUAGE.POD
 python tools/gfx.py build/pod/WIIART/flash --census
 python tools/gfx.py build/pod/WIIART/flash/rhythmgamecontrol.gfx --strings
 python tools/songs.py build/pod/WIICOMMON/data/songs

@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <iterator>
 #include <map>
 #include <random>
 #include <sstream>
@@ -201,6 +202,34 @@ int main(int argc, char** argv) {
     bool ms_ok = true;
     for (uint32_t i = 0; i < 257; ++i) ms_ok &= g_mem[ms + 3 + i] == 0xA5;
     check(ms_ok && g_mem[ms + 2] == 0 && g_mem[ms + 260] == 0, "memset");
+
+    // Optional: pairs of files, original and LZW-compressed (tools/pod.py's
+    // lzw_compress), decoded by the game's CLZWDecompress.
+    if (argc > 3) std::printf("LZW (the game's CLZWDecompress on tools/pod.py's output)\n");
+    for (int a = 3; a + 1 < argc; a += 2) {
+        auto slurp = [](const char* p) {
+            std::ifstream f(p, std::ios::binary);
+            return std::vector<uint8_t>((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        };
+        std::vector<uint8_t> raw = slurp(argv[a]), lzw = slurp(argv[a + 1]);
+        g_heap = 0x80900000u;
+        // The codec as getCodec(1, false) builds it; the dictionary is given
+        // here, so start() only initialises it.
+        uint32_t codec = alloc(0x38), table = alloc(0x2000 * 16);
+        std::memset(g_mem + codec, 0, 0x38);
+        st32(codec + 0x04, 0x2000); st32(codec + 0x14, table);
+        st32(codec + 0x24, 0x2000); st32(codec + 0x28, 8);
+        call("start__14CLZWDecompressFv", {codec});
+        uint32_t in = alloc((uint32_t)lzw.size()), out = alloc((uint32_t)raw.size()), lens = alloc(8);
+        mem_write(in, lzw.data(), lzw.size());
+        st32(lens, (uint32_t)lzw.size()); st32(lens + 4, (uint32_t)raw.size());
+        call("convertBufferToBuffer__14CLZWDecompressFPCvRiPvRii", {codec, in, lens, out, lens + 4, 0});
+        std::vector<uint8_t> got(raw.size());
+        mem_read(out, got.data(), got.size());
+        char w[160];
+        std::snprintf(w, sizeof w, "%s: %zu -> %zu bytes, result %d", argv[a], lzw.size(), raw.size(), (int)c.r[3]);
+        check(got == raw && ld32(lens + 4) == 0, "LZW decode", w);
+    }
 
     std::printf("%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

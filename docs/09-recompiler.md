@@ -163,6 +163,12 @@ What each test exercises:
 * **`memcpy`**: 8-byte copies through `lfd`/`stfd`, which must be bit-exact
   for any data, NaN patterns included.
 
+Given extra arguments, pairs of files (an original, and the same file
+compressed by `tools/pod.py`'s `lzw_compress`), it also decodes each
+compressed file with the game's `CLZWDecompress::convertBufferToBuffer` and
+compares the result with the original. That is how the LZW in `pod.py` was
+checked against the engine's (`02-container-formats.md`).
+
 ## The runtime
 
 Phase 2 built it: `11-runtime.md`.
