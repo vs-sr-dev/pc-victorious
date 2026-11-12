@@ -69,8 +69,12 @@ inside of a dependency record is not visible on this disc. An audit record:
 | 0x134 | u32 | new size |
 
 The action names and the old/new split are d3lm2's (pull request #2). On
-this disc every action is 0 and the old fields are 0, as an add would
-leave them; remove and change do not occur here.
+this disc there is one record per entry, every action is 0 and the old
+fields are 0, as an add would leave them. Wipeout: The Game's archives
+show the other side: a short change log (5 records in `WIIMODEL.POD`, 1 in
+`COMMON.POD`), each action 2 with an older timestamp and a newer one, and
+for one `.dante` script an old and a new size. Remove (1) has not been
+seen yet.
 
 **Checksums**: all five kinds are CRC-32/MPEG-2 (polynomial 0x04C11DB7, most
 significant bit first, initial value 0xFFFFFFFF, no final xor; check value
@@ -128,9 +132,11 @@ and `CInStreamFile::open` reads a compressed entry through a
 | 9 | BWT, move-to-front, LZW |
 | 10 | RLE, BWT, move-to-front, RLE, Fibonacci |
 
-Wipeout: The Game, another Infernal Engine game on Wii, uses type 1 in its
-`WIIMODEL.POD` (d3lm2, issue #1). `tools/pod.py` decodes types 0 and 1,
-names the others, and skips them on extraction.
+Wipeout: The Game (Wii, 2010, A.C.R.O.N.Y.M. Games on the Infernal
+Engine) uses type 1, as d3lm2 found (issue #1): 952 of the 1 150 entries
+of its `WIIART.POD` (every `.tex`) and 4 of its `WIIMODEL.POD`, and no other
+type. `tools/pod.py` decodes types 0 and 1, names the others, and skips
+them on extraction.
 
 **LZW** (`CLZWDecompress::convertBufferToBuffer`, `CLZWDictionary`; the
 encoder is `CLZWCompress`):
@@ -155,8 +161,10 @@ encoder is `CLZWCompress`):
 Checked: `tools/pod.py lzwtest` compresses and decompresses every entry of
 `WIILANGUAGE`, `WIIMODEL` and `WIISET` (550 files, 46 MB). The game's own
 decoder, recompiled, decodes `pod.py`'s output exactly: `selftest` takes
-pairs of files, original and compressed. Still to check: the real type-1
-entries of a game that uses them.
+pairs of files, original and compressed. On real data, Wipeout's
+archives (US disc, SOTE52): all 956 LZW entries decode to their size, and
+`lzw_compress` re-encodes every one of them byte-identical to the disc's.
+The codec is the engine's, in both directions.
 
 ## Scaleform GFx movies (`.gfx`)
 
